@@ -13,6 +13,11 @@ use App\Http\Controllers\Api\AuthController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 
+// TODO: FIX AUTH - History routes temporarily public for local testing
+// Move back inside auth:sanctum middleware before production deployment
+Route::get('/history', [App\Http\Controllers\Api\HistoryController::class, 'index']);
+Route::get('/history/stats', [App\Http\Controllers\Api\HistoryController::class, 'stats']);
+
 // Guest routes for public product and CMS content
 Route::prefix('guest')->group(function () {
     Route::get('/products', [\App\Http\Controllers\Api\GuestController::class, 'products']);

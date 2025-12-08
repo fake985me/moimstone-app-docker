@@ -11,27 +11,32 @@ use Illuminate\Support\Facades\DB;
 class DeliveryController extends Controller
 {
     /**
-     * Get all pending sales (ready for delivery)
+     * Get all deliveries
      */
     public function index(Request $request)
     {
         try {
-            $query = Sale::with(['items.product', 'delivery', 'user'])
-                ->where('status', 'pending');
+            // Show all deliveries (not just pending sales)
+            $query = Delivery::with(['sale.items.product', 'sale.user', 'user']);
 
             // Filter by search
             if ($request->has('search') && !empty($request->search)) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->whereHas('sale', function($q) use ($search) {
                     $q->where('invoice_number', 'like', "%{$search}%")
                       ->orWhere('customer_name', 'like', "%{$search}%");
                 });
             }
 
-            $sales = $query->orderBy('created_at', 'desc')
+            // Filter by status
+            if ($request->has('status') && !empty($request->status)) {
+                $query->where('status', $request->status);
+            }
+
+            $deliveries = $query->orderBy('created_at', 'desc')
                 ->paginate($request->per_page ?? 15);
 
-            return response()->json($sales);
+            return response()->json($deliveries);
         } catch (\Exception $e) {
             \Log::error('Deliveries API Error: ' . $e->getMessage());
             return response()->json([

@@ -106,6 +106,11 @@ const routes = [
                 component: () => import('../pages/Deliveries.vue'),
             },
             {
+                path: 'history',
+                name: 'History',
+                component: () => import('../pages/History.vue'),
+            },
+            {
                 path: 'sales-people',
                 name: 'SalesPeople',
                 component: () => import('../pages/SalesPeople.vue'),

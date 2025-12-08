@@ -11,18 +11,18 @@
     <!-- Filters -->
     <div class="card p-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input v-model="filters.search" @input="loadSales" type="text" placeholder="Search by invoice or customer..." class="input" />
+        <input v-model="filters.search" @input="loadDeliveries" type="text" placeholder="Search by invoice or customer..." class="input" />
       </div>
     </div>
 
-    <!-- Pending Sales Table -->
+    <!-- Deliveries Table -->
     <div class="table-wrapper">
       <div class="card-header">
-        <h3 class="text-lg font-semibold text-gray-900">Pending Sales (Ready for Delivery)</h3>
+        <h3 class="text-lg font-semibold text-gray-900">All Deliveries</h3>
       </div>
 
       <div v-if="loading" class="p-8 text-center">
-        <p class="text-gray-600">Loading sales...</p>
+        <p class="text-gray-600">Loading deliveries...</p>
       </div>
 
       <table v-else class="min-w-full">
@@ -37,33 +37,31 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="sale in sales.data" :key="sale.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ sale.invoice_number }}</td>
+          <tr v-for="delivery in deliveries.data" :key="delivery.id" class="hover:bg-gray-50">
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ delivery.sale?.invoice_number }}</td>
             <td class="px-6 py-4">
-              <div class="text-sm font-medium text-gray-900">{{ sale.customer_name }}</div>
-              <div class="text-sm text-gray-500">{{ sale.customer_phone }}</div>
+              <div class="text-sm font-medium text-gray-900">{{ delivery.sale?.customer_name }}</div>
+              <div class="text-sm text-gray-500">{{ delivery.sale?.customer_phone }}</div>
             </td>
-            <td class="px-6 py-4 text-sm text-gray-500">{{ formatDate(sale.sale_date) }}</td>
-            <td class="px-6 py-4 text-sm font-bold text-gray-900">Rp {{ formatPrice(sale.total_amount) }}</td>
+            <td class="px-6 py-4 text-sm text-gray-500">{{ formatDate(delivery.sale?.sale_date) }}</td>
+            <td class="px-6 py-4 text-sm font-bold text-gray-900">Rp {{ formatPrice(delivery.sale?.total_amount) }}</td>
             <td class="px-6 py-4">
-              <span v-if="!sale.delivery" class="badge-warning">Not Shipped</span>
-              <span v-else :class="getDeliveryBadge(sale.delivery.status)">{{ formatStatus(sale.delivery.status) }}</span>
+              <span :class="getDeliveryBadge(delivery.status)">{{ formatStatus(delivery.status) }}</span>
             </td>
             <td class="px-6 py-4 text-right text-sm space-x-2">
-              <button v-if="!sale.delivery" @click="createDelivery(sale)" class="text-teal-600 hover:text-teal-900">Create Delivery</button>
-              <button v-else @click="updateDeliveryStatus(sale.delivery)" class="text-blue-600 hover:text-blue-900">Update Status</button>
-              <button @click="viewSale(sale)" class="text-indigo-600 hover:text-indigo-900">View</button>
+              <button @click="updateDeliveryStatus(delivery)" class="text-blue-600 hover:text-blue-900">Update Status</button>
+              <button @click="viewSale(delivery.sale)" class="text-indigo-600 hover:text-indigo-900">View</button>
             </td>
           </tr>
         </tbody>
       </table>
 
       <!-- Pagination -->
-      <div v-if="sales.data?.length" class="px-6 py-4 bg-gray-50 flex justify-between">
-        <p class="text-sm text-gray-700">Showing {{ sales.from }} to {{ sales.to }} of {{ sales.total }}</p>
+      <div v-if="deliveries.data?.length" class="px-6 py-4 bg-gray-50 flex justify-between">
+        <p class="text-sm text-gray-700">Showing {{ deliveries.from }} to {{ deliveries.to }} of {{ deliveries.total }}</p>
         <div class="flex space-x-2">
-          <button @click="loadSales(sales.current_page - 1)" :disabled="!sales.prev_page_url" class="btn-secondary disabled:opacity-50">Previous</button>
-          <button @click="loadSales(sales.current_page + 1)" :disabled="!sales.next_page_url" class="btn-secondary disabled:opacity-50">Next</button>
+          <button @click="loadDeliveries(deliveries.current_page - 1)" :disabled="!deliveries.prev_page_url" class="btn-secondary disabled:opacity-50">Previous</button>
+          <button @click="loadDeliveries(deliveries.current_page + 1)" :disabled="!deliveries.next_page_url" class="btn-secondary disabled:opacity-50">Next</button>
         </div>
       </div>
     </div>
@@ -140,7 +138,7 @@
 import { ref, onMounted } from 'vue';
 import api from '../services/api';
 
-const sales = ref({ data: [] });
+const deliveries = ref({ data: [] });
 const loading = ref(true);
 const showModal = ref(false);
 const statusModal = ref(false);
@@ -179,11 +177,11 @@ const getDeliveryBadge = (status) => {
   return badges[status] || 'badge';
 };
 
-const loadSales = async (page = 1) => {
+const loadDeliveries = async (page = 1) => {
   loading.value = true;
   try {
     const response = await api.get('/deliveries', { params: { page, ...filters.value } });
-    sales.value = response.data;
+    deliveries.value = response.data;
   } catch (err) {
     console.error(err);
   } finally {
@@ -209,7 +207,7 @@ const saveDelivery = async () => {
   try {
     await api.post('/deliveries', form.value);
     showModal.value = false;
-    loadSales();
+    loadDeliveries();
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create delivery';
   } finally {
@@ -232,7 +230,7 @@ const saveStatus = async () => {
   try {
     await api.put(`/deliveries/${selectedDelivery.value.id}`, statusForm.value);
     statusModal.value = false;
-    loadSales();
+    loadDeliveries();
   } catch (err) {
     alert(err.response?.data?.message || 'Failed to update status');
   } finally {
@@ -246,6 +244,6 @@ const viewSale = (sale) => {
 };
 
 onMounted(() => {
-  loadSales();
+  loadDeliveries();
 });
 </script>

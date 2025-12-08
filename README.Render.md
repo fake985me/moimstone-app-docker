@@ -35,6 +35,7 @@ Simpan hasilnya (format: `base64:xxx...`).
 ```bash
 git add .
 git commit -m "Add Render.com configuration"
+git branch -M main
 git push origin main
 ```
 
