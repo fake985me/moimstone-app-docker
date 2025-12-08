@@ -5,7 +5,7 @@
       class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-indigo-900 to-indigo-800 text-white shadow-2xl flex flex-col">
       <!-- Logo -->
       <div class="flex items-center justify-center h-16 bg-indigo-950 border-b border-indigo-700 flex-shrink-0">
-        <h1 class="text-xl font-bold tracking-wide">📦 Warehouse Pro</h1>
+        <h1 class="text-xl font-bold tracking-wide">📦 MDI Stock Management</h1>
       </div>
 
       <!-- Navigation - Scrollable -->
