@@ -63,8 +63,15 @@ RUN php artisan route:cache && \
 # Run migrations during build (optional - bisa di-comment)
 # RUN php artisan migrate --force
 
+# Copy env generation script
+COPY docker/scripts/generate-env.sh /usr/local/bin/generate-env.sh
+RUN chmod +x /usr/local/bin/generate-env.sh
+
 # Expose dynamic PORT for Render.com
 EXPOSE $PORT
 
-# Start with PHP built-in server on dynamic port
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# Start: Generate .env, clear cache, migrate, then serve
+CMD /usr/local/bin/generate-env.sh && \
+    php artisan config:clear && \
+    php artisan migrate --force && \
+    php artisan serve --host=0.0.0.0 --port=$PORT
