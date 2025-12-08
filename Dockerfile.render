@@ -55,11 +55,9 @@ RUN cp .env.example .env || echo "APP_KEY=" > .env && \
 RUN php artisan storage:link || true && \
     chmod -R 755 storage bootstrap/cache
 
-# Optimize Laravel (with dummy DB to avoid connection errors)
-ENV DB_CONNECTION=sqlite
-ENV DB_DATABASE=:memory:
-RUN php artisan config:cache && \
-    php artisan route:cache && \
+# Optimize Laravel (skip cache to avoid DB connection during build)
+# Note: Will cache on first request in production
+RUN php artisan route:cache && \
     php artisan view:cache
 
 # Run migrations during build (optional - bisa di-comment)
