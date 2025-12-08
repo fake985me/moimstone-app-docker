@@ -1,0 +1,62 @@
+# Render.com optimized Dockerfile untuk Laravel + Vue.js
+FROM php:8.2-cli-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    postgresql-dev \
+    oniguruma-dev \
+    nginx
+
+# Install PHP extensions
+RUN docker-php-ext-install \
+    pdo_pgsql \
+    mbstring \
+    zip \
+    exif \
+    pcntl \
+    bcmath \
+    gd
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Install Node.js
+RUN apk add --no-cache nodejs npm
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy application files
+COPY . .
+
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-dev --no-interaction
+
+# Install Node dependencies and build
+RUN npm ci --only=production && \
+    npm run build && \
+    npm cache clean --force
+
+# Create storage link and set permissions
+RUN php artisan storage:link || true && \
+    chmod -R 755 storage bootstrap/cache
+
+# Optimize Laravel
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+
+# Run migrations during build (optional - bisa di-comment)
+# RUN php artisan migrate --force
+
+# Expose dynamic PORT for Render.com
+EXPOSE $PORT
+
+# Start with PHP built-in server on dynamic port
+CMD php artisan serve --host=0.0.0.0 --port=$PORT
