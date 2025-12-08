@@ -6,6 +6,9 @@ RUN apk add --no-cache \
     git \
     curl \
     libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libwebp-dev \
     libzip-dev \
     zip \
     unzip \
@@ -13,8 +16,9 @@ RUN apk add --no-cache \
     oniguruma-dev \
     nginx
 
-# Install PHP extensions
-RUN docker-php-ext-install \
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
+    docker-php-ext-install \
     pdo_pgsql \
     mbstring \
     zip \
@@ -39,15 +43,21 @@ COPY . .
 RUN composer install --optimize-autoloader --no-dev --no-interaction
 
 # Install Node dependencies and build
-RUN npm ci --only=production && \
+RUN npm ci --prefer-offline --omit=dev && \
     npm run build && \
     npm cache clean --force
+
+# Create minimal .env for build-time artisan commands
+RUN cp .env.example .env || echo "APP_KEY=" > .env && \
+    php artisan key:generate --force
 
 # Create storage link and set permissions
 RUN php artisan storage:link || true && \
     chmod -R 755 storage bootstrap/cache
 
-# Optimize Laravel
+# Optimize Laravel (with dummy DB to avoid connection errors)
+ENV DB_CONNECTION=sqlite
+ENV DB_DATABASE=:memory:
 RUN php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache
