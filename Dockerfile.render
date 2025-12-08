@@ -43,7 +43,7 @@ COPY . .
 RUN composer install --optimize-autoloader --no-dev --no-interaction
 
 # Install Node dependencies and build
-RUN npm ci --prefer-offline --omit=dev --legacy-peer-deps && \
+RUN npm install --prefer-offline --omit=dev --legacy-peer-deps && \
     npm run build && \
     npm cache clean --force
 
