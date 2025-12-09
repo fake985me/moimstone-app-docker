@@ -59,7 +59,9 @@
 <script setup>
 import { ref, onMounted, onUnmounted, markRaw } from 'vue'
 import LineAnimationSVG from '@/components/icons/LineAnimationSVG.vue'
-import axios from 'axios'
+
+// Use window.axios which has baseURL configured in bootstrap.js
+const axios = window.axios
 
 const currentIndex = ref(0)
 let intervalId = null

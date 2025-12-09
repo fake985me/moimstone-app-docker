@@ -3,13 +3,12 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
       <div>
-        <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Sales Management</h2>
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Sales Management</h2>
         <p class="text-sm text-gray-600 mt-1">Create and manage sales orders</p>
       </div>
-      <button
-        @click="showModal = true; resetForm()"
-        class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
-      >
+      <button @click="showModal = true; resetForm()"
+        class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
         + Create Sale
       </button>
     </div>
@@ -17,13 +16,8 @@
     <!-- Filters -->
     <div class="card p-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <input
-          v-model="filters.search"
-          @input="loadSales"
-          type="text"
-          placeholder="Search by invoice or customer..."
-          class="input"
-        />
+        <input v-model="filters.search" @input="loadSales" type="text" placeholder="Search by invoice or customer..."
+          class="input" />
         <select v-model="filters.status" @change="loadSales" class="input">
           <option value="">All Status</option>
           <option value="pending">Pending</option>
@@ -83,18 +77,12 @@
       <div v-if="sales.data?.length" class="px-6 py-4 bg-gray-50 flex justify-between items-center border-t">
         <p class="text-sm text-gray-700">Showing {{ sales.from }} to {{ sales.to }} of {{ sales.total }} sales</p>
         <div class="flex space-x-2">
-          <button
-            @click="loadSales(sales.current_page - 1)"
-            :disabled="!sales.prev_page_url"
-            class="btn-secondary disabled:opacity-50"
-          >
+          <button @click="loadSales(sales.current_page - 1)" :disabled="!sales.prev_page_url"
+            class="btn-secondary disabled:opacity-50">
             Previous
           </button>
-          <button
-            @click="loadSales(sales.current_page + 1)"
-            :disabled="!sales.next_page_url"
-            class="btn-secondary disabled:opacity-50"
-          >
+          <button @click="loadSales(sales.current_page + 1)" :disabled="!sales.next_page_url"
+            class="btn-secondary disabled:opacity-50">
             Next
           </button>
         </div>
@@ -107,7 +95,7 @@
         <h3 class="text-2xl font-bold mb-6 bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
           {{ editMode ? 'Edit Sales Order' : 'Create Sales Order' }}
         </h3>
-        
+
         <form @submit.prevent="saveSale" class="space-y-6">
           <!-- Customer Information -->
           <div class="p-4 bg-blue-50 rounded-lg">
@@ -152,18 +140,16 @@
             <div class="flex justify-between items-center mb-3">
               <h4 class="font-semibold text-gray-900">Line Items</h4>
               <div class="flex gap-2">
-                <input 
-                  v-model="productSearch" 
-                  type="text" 
-                  placeholder="Search products..." 
-                  class="input text-sm w-48"
-                />
-                <button type="button" @click="showProductModal = true" class="btn-secondary text-sm">+ New Product</button>
+                <input v-model="productSearch" type="text" placeholder="Search products..."
+                  class="input text-sm w-48" />
+                <button type="button" @click="showProductModal = true" class="btn-secondary text-sm">+ New
+                  Product</button>
                 <button type="button" @click="addLineItem" class="btn-primary text-sm">+ Add Item</button>
               </div>
             </div>
             <div class="space-y-3">
-              <div v-for="(item, index) in form.items" :key="index" class="grid grid-cols-12 gap-2 items-end p-3 bg-white rounded-lg">
+              <div v-for="(item, index) in form.items" :key="index"
+                class="grid grid-cols-12 gap-2 items-end p-3 bg-white rounded-lg">
                 <div class="col-span-5">
                   <label class="block text-xs font-medium text-gray-700 mb-1">Product</label>
                   <select v-model="item.product_id" @change="updatePrice(index)" required class="input text-sm">
@@ -183,7 +169,8 @@
                 </div>
                 <div class="col-span-2">
                   <label class="block text-xs font-medium text-gray-700 mb-1">Subtotal</label>
-                  <input :value="formatPrice(item.quantity * item.unit_price)" disabled class="input text-sm bg-gray-50" />
+                  <input :value="formatPrice(item.quantity * item.unit_price)" disabled
+                    class="input text-sm bg-gray-50" />
                 </div>
                 <div class="col-span-1">
                   <button type="button" @click="removeLineItem(index)" class="btn-danger text-sm w-full">×</button>
@@ -226,7 +213,7 @@
     <div v-if="showProductModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-xl p-6 w-full max-w-md">
         <h3 class="text-xl font-bold mb-4">Quick Add Product</h3>
-        
+
         <form @submit.prevent="saveProduct" class="space-y-3">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Product Title *</label>
@@ -310,7 +297,7 @@ const productForm = ref({
 const filteredProducts = computed(() => {
   if (!productSearch.value) return products.value;
   const search = productSearch.value.toLowerCase();
-  return products.value.filter(p => 
+  return products.value.filter(p =>
     (p.title?.toLowerCase().includes(search)) ||
     (p.name?.toLowerCase().includes(search)) ||
     (p.brand?.toLowerCase().includes(search)) ||
@@ -378,6 +365,9 @@ const updatePrice = (index) => {
 };
 
 const calculateTotal = () => {
+  if (!form.value.items || !Array.isArray(form.value.items)) {
+    return 0;
+  }
   return form.value.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
 };
 
@@ -402,7 +392,7 @@ const resetForm = () => {
 const saveSale = async () => {
   saving.value = true;
   error.value = '';
-  
+
   try {
     if (editMode.value) {
       // Only update status and notes when editing
@@ -431,15 +421,23 @@ const editSale = (sale) => {
   editMode.value = true;
   editId.value = sale.id;
   form.value = {
+    invoice_number: sale.invoice_number,
+    customer_name: sale.customer_name,
+    customer_email: sale.customer_email || '',
+    customer_phone: sale.customer_phone || '',
+    customer_address: sale.customer_address || '',
+    sales_person_id: sale.sales_person_id || '',
+    sale_date: sale.sale_date,
     status: sale.status,
-    notes: sale.notes || ''
+    notes: sale.notes || '',
+    items: sale.items || [{ product_id: '', quantity: 1, unit_price: 0 }]
   };
   showModal.value = true;
 };
 
 const deleteSale = async (id) => {
   if (!confirm('Are you sure you want to delete this sale?')) return;
-  
+
   try {
     await api.delete(`/sales/${id}`);
     loadSales();
@@ -451,18 +449,18 @@ const deleteSale = async (id) => {
 const saveProduct = async () => {
   savingProduct.value = true;
   productError.value = '';
-  
+
   try {
     productForm.value.sku = `SKU-${Date.now()}`;
     const response = await api.post('/products', productForm.value);
-    
+
     // Add to products list
     products.value.push(response.data);
-    
+
     // Close modal and reset
     showProductModal.value = false;
     productForm.value = { title: '', brand: '', price: 0, stock: 0, sku: '' };
-    
+
     alert('Product added successfully!');
   } catch (err) {
     productError.value = err.response?.data?.message || 'Failed to add product';

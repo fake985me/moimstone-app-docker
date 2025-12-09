@@ -1,5 +1,7 @@
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+
+// Use window.axios which has baseURL configured in bootstrap.js
+const axios = window.axios
 
 export default function useProjects() {
   const projects = ref([])
@@ -9,7 +11,7 @@ export default function useProjects() {
   const fetchProjects = async (category = null) => {
     loading.value = true
     error.value = null
-    
+
     try {
       const params = category ? { category } : {}
       const response = await axios.get('/api/guest/projects', { params })
