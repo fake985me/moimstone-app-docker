@@ -214,11 +214,11 @@ const navigation = ref([
   },
   { name: 'Service & Solutions', href: '/solutions' },
   {
-    name: 'Projects', href: '/projects',
+    name: 'Projects', href: '/project',
     children: [
-      { name: 'ISP Customer', href: '/projects?id=ispcustomer' },
-      { name: 'Managed Services', href: '/projects?id=managedservices' },
-      { name: 'FTTX Project', href: '/projects?id=fttxproject' },
+      { name: 'ISP Customer', href: '/project?id=ispcustomer' },
+      { name: 'Managed Services', href: '/project?id=managedservices' },
+      { name: 'FTTX Project', href: '/project?id=fttxproject' },
     ]
   },
   {

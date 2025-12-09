@@ -161,9 +161,9 @@ const linkSections = [
   {
     title: 'Our Projects',
     links: [
-      { name: 'ISP Partner', url: '/projects?id=ispcustomer' },
-      { name: 'Managed Service', url: '/projects?id=managedservices' },
-      { name: 'FTTx Project', url: '/projects?id=fttxproject' },
+      { name: 'ISP Partner', url: '/project?id=ispcustomer' },
+      { name: 'Managed Service', url: '/project?id=managedservices' },
+      { name: 'FTTx Project', url: '/project?id=fttxproject' },
     ],
   },
 ]
