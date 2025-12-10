@@ -1,172 +1,173 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
+import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 
 const routes = [
     {
-        path: '/',
-        name: 'Landing',
-        component: () => import('./../views/home.vue'),
+        path: "/",
+        name: "Landing",
+        component: () => import("./../views/home.vue"),
         meta: { public: true },
     },
     {
-        path: '/product',
-        name: 'Product',
-        component: () => import('./../views/productview.vue'),
+        path: "/product",
+        name: "Product",
+        component: () => import("./../views/productview.vue"),
         meta: { public: true },
     },
     {
-        path: '/product/:slug',
-        name: 'product-detail',
-        component: () => import('./../views/ProductDetail.vue'),
+        path: "/product/:slug",
+        name: "product-detail",
+        component: () => import("./../views/ProductDetail.vue"),
         meta: { public: true },
     },
     {
-        path: '/solutions',
-        name: 'Solutions',
-        component: () => import('../pages/Solutions.vue'),
+        path: "/solutions",
+        name: "Solutions",
+        component: () => import("../pages/Solutions.vue"),
         meta: { public: true },
     },
     {
-        path: '/contact',
-        name: 'Contact',
-        component: () => import('../pages/Contact.vue'),
+        path: "/contact",
+        name: "Contact",
+        component: () => import("../pages/Contact.vue"),
         meta: { public: true },
     },
     {
-        path: '/project',
-        name: 'Projects',
-        component: () => import('./../views/Projectview.vue'),
+        path: "/project",
+        name: "Projects",
+        component: () => import("./../views/Projectview.vue"),
         meta: { public: true },
     },
     {
-        path: '/diagram-fullscreen',
-        name: 'DiagramFullscreen',
-        component: () => import('../views/Product/components/DiagramFullscreen.vue'),
+        path: "/diagram-fullscreen",
+        name: "DiagramFullscreen",
+        component: () =>
+            import("../views/Product/components/DiagramFullscreen.vue"),
         meta: { public: true },
     },
     {
-        path: '/login',
-        name: 'Login',
-        component: () => import('../pages/Login.vue'),
+        path: "/login",
+        name: "Login",
+        component: () => import("../pages/Login.vue"),
     },
     {
-        path: '/pages/:slug',
-        name: 'DynamicPage',
-        component: () => import('../pages/DynamicPage.vue'),
+        path: "/pages/:slug",
+        name: "DynamicPage",
+        component: () => import("../pages/DynamicPage.vue"),
         meta: { public: true },
     },
     {
-        path: '/dashboard',
-        component: () => import('../layouts/DashboardLayout.vue'),
+        path: "/dashboard",
+        component: () => import("../layouts/DashboardLayout.vue"),
         meta: { requiresAuth: true },
         children: [
             {
-                path: '',
-                name: 'Dashboard',
-                component: () => import('../pages/Dashboard.vue'),
+                path: "",
+                name: "Dashboard",
+                component: () => import("../pages/Dashboard.vue"),
             },
             {
-                path: 'products',
-                name: 'Products',
-                component: () => import('../pages/Products.vue'),
+                path: "products",
+                name: "Products",
+                component: () => import("../pages/Products.vue"),
             },
             {
-                path: 'categories',
-                name: 'Categories',
-                component: () => import('../pages/Categories.vue'),
+                path: "categories",
+                name: "Categories",
+                component: () => import("../pages/Categories.vue"),
             },
             {
-                path: 'stock',
-                name: 'Stock',
-                component: () => import('../pages/Stock.vue'),
+                path: "stock",
+                name: "Stock",
+                component: () => import("../pages/Stock.vue"),
             },
             {
-                path: 'sales',
-                name: 'Sales',
-                component: () => import('../pages/Sales.vue'),
+                path: "sales",
+                name: "Sales",
+                component: () => import("../pages/Sales.vue"),
             },
             {
-                path: 'purchases',
-                name: 'Purchases',
-                component: () => import('../pages/Purchases.vue'),
+                path: "purchases",
+                name: "Purchases",
+                component: () => import("../pages/Purchases.vue"),
             },
             {
-                path: 'warranties',
-                name: 'Warranties',
-                component: () => import('../pages/Warranties.vue'),
+                path: "warranties",
+                name: "Warranties",
+                component: () => import("../pages/Warranties.vue"),
             },
             {
-                path: 'lendings',
-                name: 'Lendings',
-                component: () => import('../pages/Lendings.vue'),
+                path: "lendings",
+                name: "Lendings",
+                component: () => import("../pages/Lendings.vue"),
             },
             {
-                path: 'deliveries',
-                name: 'Deliveries',
-                component: () => import('../pages/Deliveries.vue'),
+                path: "deliveries",
+                name: "Deliveries",
+                component: () => import("../pages/Deliveries.vue"),
             },
             {
-                path: 'history',
-                name: 'History',
-                component: () => import('../pages/History.vue'),
+                path: "history",
+                name: "History",
+                component: () => import("../pages/History.vue"),
             },
             {
-                path: 'sales-people',
-                name: 'SalesPeople',
-                component: () => import('../pages/SalesPeople.vue'),
+                path: "sales-people",
+                name: "SalesPeople",
+                component: () => import("../pages/SalesPeople.vue"),
             },
             // CMS Content Management
             {
-                path: 'cms/solutions',
-                name: 'CmsSolutions',
-                component: () => import('../pages/CmsSolutions.vue'),
+                path: "cms/solutions",
+                name: "CmsSolutions",
+                component: () => import("../pages/CmsSolutions.vue"),
             },
             {
-                path: 'cms/projects',
-                name: 'CmsProjects',
-                component: () => import('../pages/CmsProjects.vue'),
+                path: "cms/projects",
+                name: "CmsProjects",
+                component: () => import("../pages/CmsProjects.vue"),
             },
             {
-                path: 'cms/settings',
-                name: 'CmsSettings',
-                component: () => import('../pages/CmsSettings.vue'),
+                path: "cms/settings",
+                name: "CmsSettings",
+                component: () => import("../pages/CmsSettings.vue"),
             },
             {
-                path: 'cms/contact',
-                name: 'CmsContact',
-                component: () => import('../pages/CmsContact.vue'),
+                path: "cms/contact",
+                name: "CmsContact",
+                component: () => import("../pages/CmsContact.vue"),
             },
             {
-                path: 'cms/carousel',
-                name: 'CmsCarousel',
-                component: () => import('../pages/CmsCarousel.vue'),
+                path: "cms/carousel",
+                name: "CmsCarousel",
+                component: () => import("../pages/CmsCarousel.vue"),
             },
             {
-                path: 'cms/public-products',
-                name: 'PublicProducts',
-                component: () => import('../pages/PublicProducts.vue'),
+                path: "cms/public-products",
+                name: "PublicProducts",
+                component: () => import("../pages/PublicProducts.vue"),
             },
             // Page Builder
             {
-                path: 'pages',
-                name: 'Pages',
-                component: () => import('../pages/PagesList.vue'),
+                path: "pages",
+                name: "Pages",
+                component: () => import("../pages/PagesList.vue"),
             },
             {
-                path: 'pages/create',
-                name: 'PageCreate',
-                component: () => import('../pages/PageForm.vue'),
+                path: "pages/create",
+                name: "PageCreate",
+                component: () => import("../pages/PageForm.vue"),
             },
             {
-                path: 'pages/:id/edit',
-                name: 'PageEdit',
-                component: () => import('../pages/PageForm.vue'),
+                path: "pages/:id/edit",
+                name: "PageEdit",
+                component: () => import("../pages/PageForm.vue"),
             },
             // User Management
             {
-                path: 'users',
-                name: 'Users',
-                component: () => import('../pages/Users.vue'),
+                path: "users",
+                name: "Users",
+                component: () => import("../pages/Users.vue"),
                 meta: { requiresSuperAdmin: true },
             },
         ],
@@ -185,6 +186,12 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
+    // Allow public routes without any checks
+    if (to.meta.public === true) {
+        next();
+        return;
+    }
+
     // For routes that require authentication
     if (to.meta.requiresAuth) {
         // Check if user is authenticated with valid token
@@ -192,20 +199,20 @@ router.beforeEach(async (to, from, next) => {
 
         if (!isAuthenticated) {
             // Not authenticated or token invalid, redirect to login
-            next({ name: 'Login' });
+            next({ name: "Login" });
             return;
         }
 
         // Check super admin requirement
         if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
-            next({ name: 'Dashboard' });
+            next({ name: "Dashboard" });
             return;
         }
     }
 
     // For guest-only routes (like login page)
     if (to.meta.guest && authStore.isAuthenticated) {
-        next({ name: 'Dashboard' });
+        next({ name: "Dashboard" });
         return;
     }
 

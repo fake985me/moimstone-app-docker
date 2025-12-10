@@ -10,12 +10,13 @@ class Lending extends Model
     use HasFactory;
 
     protected $fillable = [
+        'lending_code',
         'product_id',
         'borrower_name',
         'borrower_contact',
         'borrower_organization',
         'quantity',
-        'lend_date',
+        'lending_date',
         'expected_return_date',
         'actual_return_date',
         'status',
@@ -25,7 +26,7 @@ class Lending extends Model
 
     protected $casts = [
         'quantity' => 'integer',
-        'lend_date' => 'date',
+        'lending_date' => 'date',
         'expected_return_date' => 'date',
         'actual_return_date' => 'date',
     ];

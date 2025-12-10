@@ -10,8 +10,10 @@ class Warranty extends Model
     use HasFactory;
 
     protected $fillable = [
+        'warranty_code',
         'product_id',
         'sale_id',
+        'user_id',
         'warranty_period_months',
         'start_date',
         'end_date',

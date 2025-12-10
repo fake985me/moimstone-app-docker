@@ -13,15 +13,16 @@ return new class extends Migration
     {
         Schema::create('lendings', function (Blueprint $table) {
             $table->id();
+            $table->string('lending_code')->unique();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('borrower_name');
             $table->string('borrower_contact')->nullable();
             $table->string('borrower_organization')->nullable();
             $table->integer('quantity');
-            $table->date('lend_date');
+            $table->date('lending_date');
             $table->date('expected_return_date');
             $table->date('actual_return_date')->nullable();
-            $table->enum('status', ['pending', 'returned', 'overdue', 'lost'])->default('pending');
+            $table->enum('status', ['borrowed', 'returned', 'overdue', 'lost'])->default('borrowed');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->text('notes')->nullable();
             $table->timestamps();

@@ -47,7 +47,33 @@ class DeliveryController extends Controller
     }
 
     /**
-     * Create delivery from a pending sale
+     * Generate sequential tracking number
+     */
+    private function generateTrackingNumber()
+    {
+        // Format: TRK-YYYYMMDD-XXXX
+        // Example: TRK-20251210-0001
+        $today = now()->format('Ymd');
+        $prefix = "TRK-{$today}-";
+        
+        // Find last tracking number today
+        $lastDelivery = Delivery::where('tracking_number', 'like', "{$prefix}%")
+            ->orderBy('tracking_number', 'desc')
+            ->first();
+        
+        if ($lastDelivery) {
+            // Get last number and increment
+            $lastNumber = (int) substr($lastDelivery->tracking_number, -4);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Create delivery from a sale (pending or completed)
      */
     public function store(Request $request)
     {
@@ -62,9 +88,9 @@ class DeliveryController extends Controller
         try {
             $sale = Sale::findOrFail($validated['sale_id']);
 
-            // Check if sale is pending
-            if ($sale->status !== 'pending') {
-                throw new \Exception('Can only create delivery for pending sales');
+            // Allow only pending or completed sales
+            if (!in_array($sale->status, ['pending', 'completed'])) {
+                throw new \Exception('Can only create delivery for pending or completed sales');
             }
 
             // Check if delivery already exists
@@ -72,9 +98,12 @@ class DeliveryController extends Controller
                 throw new \Exception('Delivery already exists for this sale');
             }
 
+            // Auto-generate tracking number if not provided
+            $trackingNumber = $validated['tracking_number'] ?? $this->generateTrackingNumber();
+
             $delivery = Delivery::create([
                 'sale_id' => $validated['sale_id'],
-                'tracking_number' => $validated['tracking_number'],
+                'tracking_number' => $trackingNumber,
                 'courier' => $validated['courier'],
                 'status' => 'preparing',
                 'user_id' => auth()->id(),

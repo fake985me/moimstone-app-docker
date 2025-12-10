@@ -72,6 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stock-transactions', [App\Http\Controllers\Api\StockController::class, 'store']);
 
     // Sales
+    Route::get('/sales/{id}/export', [App\Http\Controllers\Api\SaleController::class, 'exportInvoice']);
+    Route::get('/sales/{id}/pdf', [App\Http\Controllers\Api\SaleController::class, 'downloadPdf']);
     Route::apiResource('sales', App\Http\Controllers\Api\SaleController::class);
     Route::get('/sales-statistics', [App\Http\Controllers\Api\SaleController::class, 'statistics']);
 

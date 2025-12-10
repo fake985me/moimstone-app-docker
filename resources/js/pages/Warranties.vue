@@ -93,19 +93,24 @@
               <input v-model="form.warranty_code" required class="input" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Product *</label>
-              <select v-model="form.product_id" required class="input">
-                <option value="">Select Product</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">{{ product.name }}</option>
-              </select>
-            </div>
-            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Sale *</label>
-              <select v-model="form.sale_id" required class="input">
+              <select v-model="form.sale_id" @change="loadSaleProducts" required class="input">
                 <option value="">Select Sale</option>
                 <option v-for="sale in sales" :key="sale.id" :value="sale.id">{{ sale.invoice_number }}</option>
               </select>
             </div>
+            
+            <!-- Products from selected sale -->
+            <div v-if="saleProducts.length > 0" class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Product * ({{ saleProducts.length }} from this sale)</label>
+              <select v-model="form.product_id" required class="input">
+                <option value="">Select Product</option>
+                <option v-for="item in saleProducts" :key="item.id" :value="item.product_id">
+                  {{ item.product?.title || item.product?.name }} (Qty: {{ item.quantity }})
+                </option>
+              </select>
+            </div>
+            
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
               <select v-model="form.status" required class="input">
@@ -147,6 +152,7 @@ import api from '../services/api';
 const warranties = ref({ data: [] });
 const products = ref([]);
 const sales = ref([]);
+const saleProducts = ref([]); // Products from selected sale
 const loading = ref(true);
 const showModal = ref(false);
 const editingWarranty = ref(null);
@@ -190,10 +196,24 @@ const loadWarranties = async (page = 1) => {
 
 const loadProducts = async () => {
   try {
+    console.log('Loading products...');
     const response = await api.get('/products', { params: { per_page: 1000 } });
-    products.value = response.data.data;
+    console.log('Products response:', response.data);
+    
+    // Handle both paginated and non-paginated responses
+    if (response.data.data) {
+      products.value = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      products.value = response.data;
+    } else {
+      products.value = [];
+    }
+    
+    console.log('Products loaded:', products.value.length);
+    console.log('First product:', products.value[0]);
   } catch (err) {
-    console.error(err);
+    console.error('Error loading products:', err);
+    console.error('Error details:', err.response?.data);
   }
 };
 
@@ -203,6 +223,25 @@ const loadSales = async () => {
     sales.value = response.data.data;
   } catch (err) {
     console.error(err);
+  }
+};
+
+const loadSaleProducts = async () => {
+  if (!form.value.sale_id) {
+    saleProducts.value = [];
+    form.value.product_id = '';
+    return;
+  }
+  
+  try {
+    const response = await api.get(`/sales/${form.value.sale_id}`);
+    saleProducts.value = response.data.items || [];
+    console.log('Sale products loaded:', saleProducts.value);
+    // Reset product selection when sale changes
+    form.value.product_id = '';
+  } catch (err) {
+    console.error('Error loading sale products:', err);
+    saleProducts.value = [];
   }
 };
 
@@ -216,6 +255,7 @@ const resetForm = () => {
     status: 'active',
     notes: '',
   };
+  saleProducts.value = [];
   editingWarranty.value = null;
   error.value = '';
 };
@@ -265,7 +305,6 @@ const deleteWarranty = async (id) => {
 
 onMounted(() => {
   loadWarranties();
-  loadProducts();
   loadSales();
 });
 </script>

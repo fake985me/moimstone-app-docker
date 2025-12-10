@@ -28,7 +28,15 @@ api.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('auth_token');
-            window.location.href = '/login';
+            
+            // Only redirect to login if we're not on a public route
+            // Check if current path is a protected route (starts with /dashboard)
+            const currentPath = window.location.pathname;
+            const isProtectedRoute = currentPath.startsWith('/dashboard');
+            
+            if (isProtectedRoute) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

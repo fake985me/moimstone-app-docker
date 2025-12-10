@@ -93,11 +93,11 @@
               <input v-model="form.lending_code" required class="input" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Product *</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Product * ({{ products.length }} available)</label>
               <select v-model="form.product_id" required class="input">
                 <option value="">Select Product</option>
                 <option v-for="product in products" :key="product.id" :value="product.id">
-                  {{ product.name }} (Stock: {{ product.current_stock?.quantity || 0 }})
+                  {{ product.title || product.name }} (Stock: {{ product.stock || 0 }})
                 </option>
               </select>
             </div>
@@ -225,10 +225,28 @@ const loadLendings = async (page = 1) => {
 
 const loadProducts = async () => {
   try {
-    const response = await api.get('/products', { params: { per_page: 1000 } });
-    products.value = response.data.data;
+    console.log('Loading products for lending...');
+    const response = await api.get('/products', { 
+      params: { 
+        per_page: 1000
+      } 
+    });
+    console.log('Products response:', response.data);
+    
+    // Handle both paginated and non-paginated responses
+    if (response.data.data) {
+      products.value = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      products.value = response.data;
+    } else {
+      products.value = [];
+    }
+    
+    console.log('Products loaded for lending:', products.value.length);
+    console.log('First product with stock:', products.value[0]);
   } catch (err) {
-    console.error(err);
+    console.error('Error loading products:', err);
+    products.value = [];
   }
 };
 

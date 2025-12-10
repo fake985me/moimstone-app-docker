@@ -132,7 +132,7 @@
         <div v-else class="space-y-4">
           <div v-for="sale in salesData" :key="`sale-${sale.id}`"
                class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
-               @click="viewDetail(sale)">
+               @click="viewSaleDetail(sale)">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center space-x-3 mb-2">
@@ -183,7 +183,7 @@
         <div v-else class="space-y-4">
           <div v-for="purchase in purchasesData" :key="`purchase-${purchase.id}`"
                class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
-               @click="viewDetail(purchase)">
+               @click="viewPurchaseDetail(purchase)">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center space-x-3 mb-2">
@@ -191,15 +191,15 @@
                     <i class="fas fa-box text-green-600"></i>
                   </div>
                   <div>
-                    <h3 class="font-semibold text-gray-900">{{ purchase.reference_number }}</h3>
-                    <p class="text-sm text-gray-600">{{ purchase.party_name }}</p>
+                    <h3 class="font-semibold text-gray-900">{{ purchase.po_number }}</h3>
+                    <p class="text-sm text-gray-600">{{ purchase.supplier_name }}</p>
                   </div>
                 </div>
                 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
                   <div>
                     <p class="text-gray-500">Tanggal</p>
-                    <p class="font-medium">{{ formatDate(purchase.date) }}</p>
+                    <p class="font-medium">{{ formatDate(purchase.purchase_date) }}</p>
                   </div>
                   <div>
                     <p class="text-gray-500">Total</p>
@@ -207,7 +207,7 @@
                   </div>
                   <div>
                     <p class="text-gray-500">Items</p>
-                    <p class="font-medium">{{ purchase.items_count }} produk</p>
+                    <p class="font-medium">{{ purchase.items?.length || 0 }} produk</p>
                   </div>
                   <div>
                     <p class="text-gray-500">Status</p>
@@ -255,7 +255,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '../services/api'
 
 const router = useRouter()
 
@@ -273,7 +273,7 @@ const meta = ref({
 })
 
 const filters = ref({
-  status: 'completed', // Default to completed for sales
+  status: '', // Empty default - show all
   date_from: '',
   date_to: ''
 })
@@ -300,22 +300,41 @@ const tabs = computed(() => [
 const fetchData = async () => {
   loading.value = true
   try {
-    const params = {
-      type: activeTab.value === 'sales' ? 'sale' : 'purchase',
-      page: meta.value.current_page,
-      per_page: meta.value.per_page,
-      ...filters.value
-    }
-
-    const response = await axios.get('/api/history', { params })
-    
     if (activeTab.value === 'sales') {
+      // Fetch sales data
+      const params = {
+        page: meta.value.current_page,
+        per_page: meta.value.per_page,
+        status: filters.value.status,
+        start_date: filters.value.date_from,
+        end_date: filters.value.date_to
+      }
+      const response = await api.get('/sales', { params })
       salesData.value = response.data.data
+      meta.value = {
+        current_page: response.data.current_page,
+        per_page: response.data.per_page,
+        total: response.data.total,
+        last_page: response.data.last_page
+      }
     } else {
+      // Fetch purchases data
+      const params = {
+        page: meta.value.current_page,
+        per_page: meta.value.per_page,
+        status: filters.value.status,
+        start_date: filters.value.date_from,
+        end_date: filters.value.date_to
+      }
+      const response = await api.get('/purchases', { params })
       purchasesData.value = response.data.data
+      meta.value = {
+        current_page: response.data.current_page,
+        per_page: response.data.per_page,
+        total: response.data.total,
+        last_page: response.data.last_page
+      }
     }
-    
-    meta.value = response.data.meta
   } catch (error) {
     console.error('Error fetching history:', error)
   } finally {
@@ -326,7 +345,7 @@ const fetchData = async () => {
 // Fetch stats
 const fetchStats = async () => {
   try {
-    const response = await axios.get('/api/history/stats')
+    const response = await api.get('/history/stats')
     stats.value = response.data
   } catch (error) {
     console.error('Error fetching stats:', error)
@@ -346,7 +365,7 @@ const changePage = (page) => {
 // Reset filters
 const resetFilters = () => {
   filters.value = {
-    status: 'completed', // Reset to completed for sales
+    status: '', // Show all
     date_from: '',
     date_to: ''
   }
@@ -355,12 +374,12 @@ const resetFilters = () => {
 }
 
 // View detail
-const viewDetail = (item) => {
-  if (item.type === 'sale') {
-    router.push(`/sales/${item.id}`)
-  } else {
-    router.push(`/purchases/${item.id}`)
-  }
+const viewSaleDetail = (sale) => {
+  router.push('/dashboard/sales')
+}
+
+const viewPurchaseDetail = (purchase) => {
+  router.push('/dashboard/purchases')
 }
 
 // Formatters
@@ -392,6 +411,8 @@ const getStatusClass = (status) => {
 
 // Watch tab changes
 watch(activeTab, () => {
+  // Reset filters when switching tabs
+  filters.value.status = ''
   meta.value.current_page = 1
   fetchData()
 })

@@ -14,10 +14,36 @@ use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
+    /**
+     * Generate sequential invoice number
+     */
+    private function generateInvoiceNumber()
+    {
+        // Format: INV-YYYYMMDD-XXXX
+        // Example: INV-20251210-0001
+        $today = now()->format('Ymd');
+        $prefix = "INV-{$today}-";
+        
+        // Find last invoice today
+        $lastSale = Sale::where('invoice_number', 'like', "{$prefix}%")
+            ->orderBy('invoice_number', 'desc')
+            ->first();
+        
+        if ($lastSale) {
+            // Get last number and increment
+            $lastNumber = (int) substr($lastSale->invoice_number, -4);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
     public function index(Request $request)
     {
         try {
-            $query = Sale::with(['salesPerson', 'user', 'items.product']);
+            $query = Sale::with(['salesPerson', 'user', 'items.product', 'delivery']);
 
             // Filter by status
             if ($request->has('status') && !empty($request->status)) {
@@ -59,7 +85,7 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'invoice_number' => 'required|unique:sales,invoice_number',
+            'invoice_number' => 'nullable|unique:sales,invoice_number',
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'nullable|email',
             'customer_phone' => 'nullable|string',
@@ -76,9 +102,12 @@ class SaleController extends Controller
 
         DB::beginTransaction();
         try {
+            // Auto-generate invoice number if not provided
+            $invoiceNumber = $validated['invoice_number'] ?? $this->generateInvoiceNumber();
+
             // Create sale
             $sale = Sale::create([
-                'invoice_number' => $validated['invoice_number'],
+                'invoice_number' => $invoiceNumber,
                 'customer_name' => $validated['customer_name'],
                 'customer_email' => $validated['customer_email'] ?? null,
                 'customer_phone' => $validated['customer_phone'] ?? null,
@@ -225,5 +254,32 @@ class SaleController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Export invoice to Excel
+     */
+    public function exportInvoice($id)
+    {
+        $sale = Sale::with(['items.product', 'salesPerson'])->findOrFail($id);
+        $filename = "invoice_{$sale->invoice_number}.xlsx";
+        
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\SaleInvoiceExport($id), 
+            $filename
+        );
+    }
+
+    /**
+     * Download invoice as PDF
+     */
+    public function downloadPdf($id)
+    {
+        $sale = Sale::with(['items.product', 'salesPerson', 'user'])
+            ->findOrFail($id);
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', compact('sale'));
+        
+        return $pdf->download("invoice_{$sale->invoice_number}.pdf");
     }
 }

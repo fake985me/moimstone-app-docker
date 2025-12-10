@@ -53,6 +53,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
           </tr>
         </thead>
@@ -70,7 +71,16 @@
                 {{ sale.status }}
               </span>
             </td>
+            <td class="px-6 py-4">
+              <span v-if="sale.delivery" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                🚚 {{ sale.delivery.tracking_number }}
+              </span>
+              <span v-else class="text-xs text-gray-400">No delivery</span>
+            </td>
             <td class="px-6 py-4 text-right text-sm space-x-2">
+              <button v-if="!sale.delivery && ['pending', 'completed'].includes(sale.status)" @click="openDeliveryModal(sale)" class="text-teal-600 hover:text-teal-900">+ Delivery</button>
+              <button @click="exportExcel(sale.id, sale.invoice_number)" class="text-green-600 hover:text-green-900">Excel</button>
+              <button @click="downloadPdf(sale.id, sale.invoice_number)" class="text-red-600 hover:text-red-900">PDF</button>
               <button @click="editSale(sale)" class="text-blue-600 hover:text-blue-900">Edit</button>
               <button @click="viewSale(sale)" class="text-indigo-600 hover:text-indigo-900">View</button>
               <button @click="deleteSale(sale.id)" class="text-red-600 hover:text-red-900">Delete</button>
@@ -113,10 +123,6 @@
           <div class="p-4 bg-blue-50 rounded-lg">
             <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
             <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number *</label>
-                <input v-model="form.invoice_number" required class="input" placeholder="INV-001" />
-              </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Sale Date *</label>
                 <input v-model="form.sale_date" type="date" required class="input" />
@@ -222,6 +228,55 @@
       </div>
     </div>
 
+    <!-- Create Delivery Modal -->
+    <div v-if="showDeliveryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-4 text-teal-600">Create Delivery</h3>
+        
+        <form @submit.prevent="createDelivery" class="space-y-4">
+          <div class="p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm font-medium text-gray-700">Sale Information:</p>
+            <p class="text-sm text-gray-600">Invoice: <span class="font-semibold">{{ selectedSale?.invoice_number }}</span></p>
+            <p class="text-sm text-gray-600">Customer: <span class="font-semibold">{{ selectedSale?.customer_name }}</span></p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Courier *</label>
+            <select v-model="deliveryForm.courier" required class="input">
+              <option value="">Select Courier</option>
+              <option value="JNE">JNE</option>
+              <option value="J&T">J&T</option>
+              <option value="SiCepat">SiCepat</option>
+              <option value="Ninja Express">Ninja Express</option>
+              <option value="AnterAja">AnterAja</option>
+              <option value="Pickup">Pickup</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tracking Number</label>
+            <input v-model="deliveryForm.tracking_number" class="input" placeholder="Leave empty to auto-generate" />
+            <p class="text-xs text-gray-500 mt-1">Will be auto-generated if left empty</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea v-model="deliveryForm.notes" rows="3" class="input"></textarea>
+          </div>
+
+          <div v-if="deliveryError" class="bg-red-50 text-red-600 p-2 rounded text-sm">{{ deliveryError }}</div>
+
+          <div class="flex justify-end space-x-2 pt-3">
+            <button type="button" @click="showDeliveryModal = false" class="btn-secondary">Cancel</button>
+            <button type="submit" :disabled="savingDelivery" class="btn-primary">
+              {{ savingDelivery ? 'Creating...' : 'Create Delivery' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Quick Add Product Modal -->
     <div v-if="showProductModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-xl p-6 w-full max-w-md">
@@ -271,13 +326,17 @@ const salesPeople = ref([]);
 const loading = ref(true);
 const showModal = ref(false);
 const showProductModal = ref(false);
+const showDeliveryModal = ref(false);
 const editMode = ref(false);
 const editId = ref(null);
 const saving = ref(false);
 const savingProduct = ref(false);
+const savingDelivery = ref(false);
 const error = ref('');
 const productError = ref('');
+const deliveryError = ref('');
 const productSearch = ref('');
+const selectedSale = ref(null);
 
 const filters = ref({
   search: '',
@@ -305,6 +364,12 @@ const productForm = ref({
   price: 0,
   stock: 0,
   sku: '',
+});
+
+const deliveryForm = ref({
+  courier: '',
+  tracking_number: '',
+  notes: '',
 });
 
 const filteredProducts = computed(() => {
@@ -335,6 +400,7 @@ const loadSales = async (page = 1) => {
   loading.value = true;
   try {
     const params = { page, ...filters.value };
+    // Load sales with delivery relationship
     const response = await api.get('/sales', { params });
     sales.value = response.data;
   } catch (err) {
@@ -385,7 +451,6 @@ const resetForm = () => {
   editMode.value = false;
   editId.value = null;
   form.value = {
-    invoice_number: 'INV-' + Date.now(),
     customer_name: '',
     customer_email: '',
     customer_phone: '',
@@ -468,6 +533,89 @@ const saveProduct = async () => {
     productError.value = err.response?.data?.message || 'Failed to add product';
   } finally {
     savingProduct.value = false;
+  }
+};
+
+const openDeliveryModal = (sale) => {
+  selectedSale.value = sale;
+  deliveryForm.value = {
+    courier: '',
+    tracking_number: '',
+    notes: '',
+  };
+  deliveryError.value = '';
+  showDeliveryModal.value = true;
+};
+
+const createDelivery = async () => {
+  savingDelivery.value = true;
+  deliveryError.value = '';
+  
+  try {
+    const payload = {
+      sale_id: selectedSale.value.id,
+      courier: deliveryForm.value.courier,
+      notes: deliveryForm.value.notes,
+    };
+    
+    // Only include tracking_number if provided
+    if (deliveryForm.value.tracking_number) {
+      payload.tracking_number = deliveryForm.value.tracking_number;
+    }
+    
+    const response = await api.post('/deliveries', payload);
+    
+    // Close modal and reload sales
+    showDeliveryModal.value = false;
+    loadSales();
+    
+    alert(`Delivery created successfully! Tracking: ${response.data.tracking_number}`);
+  } catch (err) {
+    deliveryError.value = err.response?.data?.message || 'Failed to create delivery';
+  } finally {
+    savingDelivery.value = false;
+  }
+};
+
+const exportExcel = async (saleId, invoiceNumber) => {
+  try {
+    const response = await api.get(`/sales/${saleId}/export`, {
+      responseType: 'blob'
+    });
+    
+    // Create blob link to download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `invoice_${invoiceNumber}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Export error:', err);
+    alert('Failed to export Excel file');
+  }
+};
+
+const downloadPdf = async (saleId, invoiceNumber) => {
+  try {
+    const response = await api.get(`/sales/${saleId}/pdf`, {
+      responseType: 'blob'
+    });
+    
+    // Create blob link to download
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `invoice_${invoiceNumber}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('PDF download error:', err);
+    alert('Failed to download PDF file');
   }
 };
 

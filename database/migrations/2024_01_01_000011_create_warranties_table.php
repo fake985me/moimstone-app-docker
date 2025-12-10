@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('warranties', function (Blueprint $table) {
             $table->id();
+            $table->string('warranty_code')->unique();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->foreignId('sale_id')->nullable()->constrained()->onDelete('set null');
-            $table->integer('warranty_period_months');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->integer('warranty_period_months')->nullable();
             $table->date('start_date');
             $table->date('end_date');
             $table->enum('status', ['active', 'expired', 'claimed', 'void'])->default('active');

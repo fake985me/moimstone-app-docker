@@ -12,7 +12,7 @@ class WarrantyController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Warranty::with(['sale.customer', 'product']);
+            $query = Warranty::with(['sale', 'product']);
 
             // Filter by status
             if ($request->has('status') && !empty($request->status)) {
@@ -57,7 +57,10 @@ class WarrantyController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $warranty = Warranty::create($validated);
+        $warranty = Warranty::create([
+            ...$validated,
+            'user_id' => auth()->id(),
+        ]);
 
         return response()->json($warranty->load(['sale', 'product']), 201);
     }
