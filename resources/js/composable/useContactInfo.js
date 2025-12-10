@@ -1,5 +1,7 @@
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+
+// Use window.axios which has baseURL configured in bootstrap.js
+const axios = window.axios
 
 export default function useContactInfo() {
   const contacts = ref([])
@@ -9,7 +11,7 @@ export default function useContactInfo() {
   const fetchContacts = async (type = null) => {
     loading.value = true
     error.value = null
-    
+
     try {
       const params = type ? { type } : {}
       const response = await axios.get('/api/guest/contact-info', { params })

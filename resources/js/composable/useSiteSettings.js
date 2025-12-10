@@ -1,5 +1,7 @@
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+
+// Use window.axios which has baseURL configured in bootstrap.js
+const axios = window.axios
 
 export default function useSiteSettings() {
   const settings = ref({})
@@ -9,7 +11,7 @@ export default function useSiteSettings() {
   const fetchSettings = async (group = null) => {
     loading.value = true
     error.value = null
-    
+
     try {
       const params = group ? { group } : {}
       const response = await axios.get('/api/guest/site-settings', { params })

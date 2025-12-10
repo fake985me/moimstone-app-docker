@@ -1,5 +1,7 @@
 import { ref, computed } from 'vue'
-import axios from 'axios'
+
+// Use window.axios which has baseURL configured in bootstrap.js
+const axios = window.axios
 
 // Singleton instance to share products across components
 const products = ref([])
