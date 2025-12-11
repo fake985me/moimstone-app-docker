@@ -4,6 +4,7 @@
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-gray-900">Stock Management</h2>
       <button
+        v-if="activeTab === 'regular'"
         @click="showTransactionModal = true"
         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
       >
@@ -11,30 +12,62 @@
       </button>
     </div>
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-md p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input
-          v-model="filters.search"
-          @input="loadStocks"
-          type="text"
-          placeholder="Search by product name or SKU..."
-          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        />
-        <div class="flex items-center">
-          <input
-            id="low-stock"
-            v-model="filters.low_stock"
-            @change="loadStocks"
-            type="checkbox"
-            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-          />
-          <label for="low-stock" class="ml-2 text-sm text-gray-700">
-            Show only low stock items
-          </label>
-        </div>
+    <!-- Tabs -->
+    <div class="bg-white rounded-lg shadow-md">
+      <div class="border-b border-gray-200">
+        <nav class="flex -mb-px">
+          <button
+            @click="activeTab = 'regular'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'regular'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            📦 Regular Stock
+          </button>
+          <button
+            @click="activeTab = 'rma'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'rma'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            ↩️ RMA Inventory
+          </button>
+        </nav>
       </div>
     </div>
+
+    <!-- Regular Stock Tab -->
+    <div v-show="activeTab === 'regular'" class="space-y-4">
+      <!-- Filters -->
+      <div class="bg-white rounded-lg shadow-md p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input
+            v-model="filters.search"
+            @input="loadStocks"
+            type="text"
+            placeholder="Search by product name or SKU..."
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          <div class="flex items-center">
+            <input
+              id="low-stock"
+              v-model="filters.low_stock"
+              @change="loadStocks"
+              type="checkbox"
+              class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+            />
+            <label for="low-stock" class="ml-2 text-sm text-gray-700">
+              Show only low stock items
+            </label>
+          </div>
+        </div>
+      </div>
 
     <!-- Current Stock Table -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
@@ -119,6 +152,58 @@
           </button>
         </div>
       </div>
+    </div>
+    </div>
+
+    <!-- RMA Inventory Tab -->
+    <div v-show="activeTab === 'rma'">
+    <!-- RMA Inventory Section -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-red-50">
+        <h3 class="text-lg font-semibold text-gray-900">↩️ RMA Inventory (Returned Items)</h3>
+        <p class="text-sm text-gray-600 mt-1">Items returned from RMAs grouped by condition</p>
+      </div>
+
+      <div v-if="loadingRMA" class="p-8 text-center">
+        <p class="text-gray-600">Loading RMA inventory...</p>
+      </div>
+
+      <div v-else-if="!rmaStock.length" class="p-8 text-center">
+        <p class="text-gray-500">No RMA items in stock</p>
+      </div>
+
+      <table v-else class="min-w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr v-for="rma in rmaStock" :key="`${rma.product_id}-${rma.condition}`" class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ rma.product?.title }}</div>
+              <div class="text-xs text-gray-500">{{ rma.product?.brand }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span :class="getConditionBadge(rma.condition)" class="px-2 py-1 text-xs rounded-full capitalize">
+                {{ rma.condition?.replace('_', ' ') || 'N/A' }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-lg font-bold text-gray-900">{{ rma.total_quantity }}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+              <router-link to="/dashboard/rmas" class="text-indigo-600 hover:text-indigo-900">
+                View RMAs →
+              </router-link>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     </div>
 
     <!-- Transaction Modal -->
@@ -210,11 +295,14 @@ import api from '../services/api';
 
 const stocks = ref({ data: [] });
 const allStocks = ref([]);
+const rmaStock = ref([]);
+const activeTab = ref('regular');
 const loading = ref(true);
+const loadingRMA = ref(true);
 const showTransactionModal = ref(false);
 const saving = ref(false);
 const error = ref('');
-const success = ref('');
+const success = '';
 
 const filters = ref({
   search: '',
@@ -239,6 +327,28 @@ const loadStocks = async (page = 1) => {
   } finally {
     loading.value = false;
   }
+};
+
+const loadRMAStock = async () => {
+  loadingRMA.value = true;
+  try {
+    const response = await api.get('/stock/rma-inventory');
+    rmaStock.value = response.data;
+  } catch (err) {
+    console.error('Failed to load RMA stock:', err);
+  } finally {
+    loadingRMA.value = false;
+  }
+};
+
+const getConditionBadge = (condition) => {
+  const badges = {
+    working: 'bg-green-100 text-green-800',
+    damaged: 'bg-yellow-100 text-yellow-800',
+    broken: 'bg-red-100 text-red-800',
+    parts_only: 'bg-gray-100 text-gray-800',
+  };
+  return badges[condition] || 'bg-blue-100 text-blue-800';
 };
 
 const loadAllStocks = async () => {
@@ -275,5 +385,6 @@ const saveTransaction = async () => {
 onMounted(() => {
   loadStocks();
   loadAllStocks();
+  loadRMAStock();
 });
 </script>

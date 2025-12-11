@@ -123,4 +123,26 @@ class StockController extends Controller
             ], 422);
         }
     }
+
+    /**
+     * Get RMA stock inventory grouped by product and condition
+     */
+    public function rmaStock()
+    {
+        try {
+            $rmas = \App\Models\RMA::with('product')
+                ->where('status', 'received')
+                ->select('product_id', 'condition', \DB::raw('SUM(quantity) as total_quantity'))
+                ->groupBy('product_id', 'condition')
+                ->get();
+
+            return response()->json($rmas);
+        } catch (\Exception $e) {
+            \Log::error('RMA Stock API Error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error loading RMA stock',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

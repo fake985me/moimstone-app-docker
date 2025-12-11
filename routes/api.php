@@ -65,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\StockController::class, 'index']);
         Route::get('/transactions', [App\Http\Controllers\Api\StockController::class, 'transactions']);
         Route::post('/transaction', [App\Http\Controllers\Api\StockController::class, 'store']);
+        Route::get('/rma-inventory', [App\Http\Controllers\Api\StockController::class, 'rmaStock']);
     });
     // Legacy routes for backwards compatibility
     Route::get('/current-stocks', [App\Http\Controllers\Api\StockController::class, 'index']);
@@ -89,6 +90,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Lendings
     Route::apiResource('lendings', App\Http\Controllers\Api\LendingController::class);
     Route::post('/lendings/{lending}/return', [App\Http\Controllers\Api\LendingController::class, 'processReturn']);
+
+    // RMAs (Return Merchandise Authorization)
+    Route::apiResource('rmas', App\Http\Controllers\Api\RMAController::class);
+    Route::post('/rmas/{rma}/mark-received', [App\Http\Controllers\Api\RMAController::class, 'markReceived']);
+    Route::post('/rmas/{rma}/process', [App\Http\Controllers\Api\RMAController::class, 'process']);
 
     // Deliveries
     Route::apiResource('deliveries', App\Http\Controllers\Api\DeliveryController::class);

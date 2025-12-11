@@ -104,6 +104,13 @@
           <span class="font-medium">Lendings</span>
         </router-link>
 
+        <router-link to="/dashboard/rmas"
+          class="flex items-center px-4 py-3 rounded-lg hover:bg-indigo-800 transition-all duration-200 hover:translate-x-1"
+          active-class="bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-lg">
+          <span class="mr-3 text-lg">↩️</span>
+          <span class="font-medium">RMA Management</span>
+        </router-link>
+
         <router-link to="/dashboard/deliveries"
           class="flex items-center px-4 py-3 rounded-lg hover:bg-indigo-800 transition-all duration-200 hover:translate-x-1"
           active-class="bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-lg">

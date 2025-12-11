@@ -16,7 +16,7 @@ class LendingController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Lending::with(['product', 'user', 'lendingReturn']);
+            $query = Lending::with(['product', 'user']);
 
             // Filter by status
             if ($request->has('status') && !empty($request->status)) {
@@ -79,12 +79,15 @@ class LendingController extends Controller
             ]);
             
             // Update the stock transaction with actual lending ID
-            StockTransaction::where('reference_type', 'lending')
+            $transaction = StockTransaction::where('reference_type', 'lending')
                 ->where('product_id', $validated['product_id'])
                 ->whereNull('reference_id')
                 ->latest()
-                ->first()
-                ->update(['reference_id' => $lending->id]);
+                ->first();
+                
+            if ($transaction) {
+                $transaction->update(['reference_id' => $lending->id]);
+            }
 
             DB::commit();
             return response()->json($lending->load(['product', 'user']), 201);

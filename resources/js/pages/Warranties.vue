@@ -57,7 +57,7 @@
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="warranty in warranties.data" :key="warranty.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ warranty.warranty_code }}</td>
-            <td class="px-6 py-4 text-sm text-gray-900">{{ warranty.product?.name }}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">{{ warranty.product?.title }}</td>
             <td class="px-6 py-4 text-sm text-gray-500">{{ formatDate(warranty.start_date) }}</td>
             <td class="px-6 py-4 text-sm text-gray-500">{{ formatDate(warranty.end_date) }}</td>
             <td class="px-6 py-4">
