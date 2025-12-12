@@ -25,6 +25,7 @@ return new class extends Migration
             $table->date('received_date')->nullable();
             $table->enum('resolution', ['repair', 'replace', 'refund'])->nullable();
             $table->text('notes')->nullable();
+            $table->text('condition')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
