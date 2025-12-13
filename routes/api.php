@@ -66,6 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/transactions', [App\Http\Controllers\Api\StockController::class, 'transactions']);
         Route::post('/transaction', [App\Http\Controllers\Api\StockController::class, 'store']);
         Route::get('/rma-inventory', [App\Http\Controllers\Api\StockController::class, 'rmaStock']);
+        Route::get('/investment-inventory', [App\Http\Controllers\Api\StockController::class, 'investmentStock']);
+        Route::get('/msa-inventory', [App\Http\Controllers\Api\StockController::class, 'msaStock']);
+        Route::get('/defective', [App\Http\Controllers\Api\StockController::class, 'defectiveStock']);
     });
     // Legacy routes for backwards compatibility
     Route::get('/current-stocks', [App\Http\Controllers\Api\StockController::class, 'index']);
@@ -95,6 +98,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('rmas', App\Http\Controllers\Api\RMAController::class);
     Route::post('/rmas/{rma}/mark-received', [App\Http\Controllers\Api\RMAController::class, 'markReceived']);
     Route::post('/rmas/{rma}/process', [App\Http\Controllers\Api\RMAController::class, 'process']);
+
+    // Project Investments
+    Route::get('/project-investments/{id}/export', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'export']);
+    Route::post('/project-investments/{id}/approve', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'approve']);
+    Route::post('/project-investments/{id}/start', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'start']);
+    Route::post('/project-investments/{id}/complete', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'complete']);
+    Route::post('/project-investments/{id}/cancel', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'cancel']);
+    Route::apiResource('project-investments', App\Http\Controllers\Api\ProjectInvestmentController::class);
+
+    // MSA Projects (Maintenance Service Agreement)
+    Route::post('/msa-projects/{id}/start-repair', [App\Http\Controllers\Api\MSAProjectController::class, 'startRepair']);
+    Route::post('/msa-projects/{id}/mark-returned', [App\Http\Controllers\Api\MSAProjectController::class, 'markReturned']);
+    Route::post('/msa-projects/{id}/replace', [App\Http\Controllers\Api\MSAProjectController::class, 'replaceItem']);
+    Route::post('/msa-projects/{id}/close', [App\Http\Controllers\Api\MSAProjectController::class, 'close']);
+    Route::apiResource('msa-projects', App\Http\Controllers\Api\MSAProjectController::class);
 
     // Deliveries
     Route::apiResource('deliveries', App\Http\Controllers\Api\DeliveryController::class);

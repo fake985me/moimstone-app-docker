@@ -51,7 +51,7 @@
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="lending in lendings.data" :key="lending.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ lending.lending_code }}</td>
-            <td class="px-6 py-4 text-sm text-gray-900">{{ lending.product?.name }}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">{{ lending.product?.title }}</td>
             <td class="px-6 py-4">
               <div class="text-sm font-medium text-gray-900">{{ lending.borrower_name }}</div>
               <div class="text-xs text-gray-500">{{ lending.borrower_contact }}</div>

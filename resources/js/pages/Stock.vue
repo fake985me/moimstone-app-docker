@@ -38,6 +38,39 @@
           >
             ↩️ RMA Inventory
           </button>
+          <button
+            @click="activeTab = 'investment'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'investment'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            📊 Investment Stock
+          </button>
+          <button
+            @click="activeTab = 'msa'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'msa'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            🔧 MSA Project
+          </button>
+          <button
+            @click="activeTab = 'defective'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'defective'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            ⚠️ Defective Items
+          </button>
         </nav>
       </div>
     </div>
@@ -206,6 +239,149 @@
     </div>
     </div>
 
+    <!-- Investment Stock Tab -->
+    <div v-show="activeTab === 'investment'">
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+          <h3 class="text-lg font-semibold text-gray-900">📊 Investment Stock (Project Allocations)</h3>
+          <p class="text-sm text-gray-600 mt-1">Items allocated to active projects</p>
+        </div>
+
+        <div v-if="loadingInvestment" class="p-8 text-center">
+          <p class="text-gray-600">Loading investment stock...</p>
+        </div>
+
+        <div v-else-if="!investmentStock.length" class="p-8 text-center">
+          <p class="text-gray-500">No items allocated to projects</p>
+        </div>
+
+        <table v-else class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="item in investmentStock" :key="`${item.product_id}-${item.project_investment_id}`" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ item.product?.title }}</div>
+                <div class="text-xs text-gray-500">{{ item.product?.brand }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ item.project?.project_name }}</div>
+                <div class="text-xs text-gray-500">{{ item.project?.project_code }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-lg font-bold text-purple-600">{{ item.total_quantity }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-semibold text-green-600">{{ formatCurrency(item.total_value) }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <router-link to="/dashboard/project-investments" class="text-indigo-600 hover:text-indigo-900">
+                  View Projects →
+                </router-link>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MSA Project Tab -->
+    <div v-show="activeTab === 'msa'">
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-red-50">
+          <h3 class="text-lg font-semibold text-gray-900">🔧 MSA Project (Items in Repair)</h3>
+          <p class="text-sm text-gray-600 mt-1">Items from projects currently being repaired or replaced</p>
+        </div>
+
+        <div v-if="loadingMSA" class="p-8 text-center">
+          <p class="text-gray-600">Loading MSA items...</p>
+        </div>
+
+        <div v-else-if="!msaStock?.length" class="p-8 text-center">
+          <p class="text-gray-500">No MSA items in repair</p>
+        </div>
+
+        <table v-else class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MSA Code</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Issue</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="item in msaStock" :key="item.id" class="hover:bg-gray-50">
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ item.msa_code }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ item.product?.title }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ item.project?.project_name || '-' }}</td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">{{ item.issue_type }}</span>
+              </td>
+              <td class="px-6 py-4 text-sm font-bold">{{ item.quantity }}</td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ item.status.replace('_', ' ') }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Defective Items Tab -->
+    <div v-show="activeTab === 'defective'">
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-red-50 to-gray-50">
+          <h3 class="text-lg font-semibold text-gray-900">⚠️ Defective/Returned Items</h3>
+          <p class="text-sm text-gray-600 mt-1">Combined defective items from RMA, MSA, and Projects</p>
+        </div>
+
+        <div v-if="loadingDefective" class="p-8 text-center">
+          <p class="text-gray-600">Loading defective items...</p>
+        </div>
+
+        <div v-else-if="!defectiveStock?.length" class="p-8 text-center">
+          <p class="text-gray-500">No defective items</p>
+        </div>
+
+        <table v-else class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Condition</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="(item, index) in defectiveStock" :key="index" class="hover:bg-gray-50">
+              <td class="px-6 py-4">
+                <span :class="item.source === 'RMA' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'" class="px-2 py-1 text-xs rounded-full">
+                  {{ item.source }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ item.code }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ item.product?.title }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-red-600">{{ item.quantity }}</td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">{{ item.condition }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Transaction Modal -->
     <div v-if="showTransactionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
@@ -296,9 +472,15 @@ import api from '../services/api';
 const stocks = ref({ data: [] });
 const allStocks = ref([]);
 const rmaStock = ref([]);
+const investmentStock = ref([]);
+const msaStock = ref([]);
+const defectiveStock = ref([]);
 const activeTab = ref('regular');
 const loading = ref(true);
 const loadingRMA = ref(true);
+const loadingInvestment = ref(true);
+const loadingMSA = ref(true);
+const loadingDefective = ref(true);
 const showTransactionModal = ref(false);
 const saving = ref(false);
 const error = ref('');
@@ -338,6 +520,46 @@ const loadRMAStock = async () => {
     console.error('Failed to load RMA stock:', err);
   } finally {
     loadingRMA.value = false;
+  }
+};
+
+const loadInvestmentStock = async () => {
+  loadingInvestment.value = true;
+  try {
+    const response = await api.get('/stock/investment-inventory');
+    investmentStock.value = response.data;
+  } catch (err) {
+    console.error('Failed to load investment stock:', err);
+  } finally {
+    loadingInvestment.value = false;
+  }
+};
+
+const formatCurrency = (value) => {
+  return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
+};
+
+const loadMSAStock = async () => {
+  loadingMSA.value = true;
+  try {
+    const response = await api.get('/stock/msa-inventory');
+    msaStock.value = response.data;
+  } catch (err) {
+    console.error('Failed to load MSA stock:', err);
+  } finally {
+    loadingMSA.value = false;
+  }
+};
+
+const loadDefectiveStock = async () => {
+  loadingDefective.value = true;
+  try {
+    const response = await api.get('/stock/defective');
+    defectiveStock.value = response.data;
+  } catch (err) {
+    console.error('Failed to load defective stock:', err);
+  } finally {
+    loadingDefective.value = false;
   }
 };
 
@@ -386,5 +608,8 @@ onMounted(() => {
   loadStocks();
   loadAllStocks();
   loadRMAStock();
+  loadInvestmentStock();
+  loadMSAStock();
+  loadDefectiveStock();
 });
 </script>

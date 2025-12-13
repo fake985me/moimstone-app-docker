@@ -99,7 +99,7 @@ class LendingController extends Controller
 
     public function show($id)
     {
-        $lending = Lending::with(['product', 'user', 'lendingReturn'])->findOrFail($id);
+        $lending = Lending::with(['product', 'user', 'returns'])->findOrFail($id);
         return response()->json($lending);
     }
 
@@ -148,7 +148,7 @@ class LendingController extends Controller
             }
 
             DB::commit();
-            return response()->json($lending->load(['product', 'user', 'lendingReturn']));
+            return response()->json($lending->load(['product', 'user', 'returns']));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => $e->getMessage()], 422);

@@ -145,4 +145,105 @@ class StockController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get investment stock - items allocated to projects
+     */
+    public function investmentStock()
+    {
+        try {
+            $items = \App\Models\ProjectInvestmentItem::with(['product', 'project'])
+                ->whereHas('project', function($q) {
+                    $q->whereIn('status', ['approved', 'active']);
+                })
+                ->where('stock_deducted', true)
+                ->select(
+                    'product_id',
+                    'project_investment_id',
+                    \DB::raw('SUM(quantity) as total_quantity'),
+                    \DB::raw('SUM(total_price) as total_value')
+                )
+                ->groupBy('product_id', 'project_investment_id')
+                ->get();
+
+            return response()->json($items);
+        } catch (\Exception $e) {
+            \Log::error('Investment Stock API Error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error loading investment stock',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get MSA Project stock - items in repair/replacement process
+     */
+    public function msaStock()
+    {
+        try {
+            $items = \App\Models\MSAProject::with(['product', 'project'])
+                ->whereIn('status', ['pending', 'in_repair'])
+                ->get();
+
+            return response()->json($items);
+        } catch (\Exception $e) {
+            \Log::error('MSA Stock API Error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error loading MSA stock',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get defective items - combined from RMA, MSA, and Project
+     */
+    public function defectiveStock()
+    {
+        try {
+            $defective = [];
+
+            // RMA - non-working items
+            $rmaItems = \App\Models\RMA::with('product')
+                ->where('status', 'received')
+                ->where('condition', '!=', 'working')
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'source' => 'RMA',
+                        'code' => $item->rma_code,
+                        'product' => $item->product,
+                        'quantity' => $item->quantity,
+                        'condition' => $item->condition,
+                        'date' => $item->received_date,
+                    ];
+                });
+
+            // MSA - all issue items
+            $msaItems = \App\Models\MSAProject::with('product')
+                ->whereIn('status', ['pending', 'in_repair', 'returned', 'replaced'])
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'source' => 'MSA',
+                        'code' => $item->msa_code,
+                        'product' => $item->product,
+                        'quantity' => $item->quantity,
+                        'condition' => $item->issue_type . ($item->condition ? " ({$item->condition})" : ''),
+                        'date' => $item->reported_date,
+                    ];
+                });
+
+            $defective = $rmaItems->concat($msaItems)->sortByDesc('date')->values();
+
+            return response()->json($defective);
+        } catch (\Exception $e) {
+            \Log::error('Defective Stock API Error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error loading defective stock',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
