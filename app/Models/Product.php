@@ -16,17 +16,19 @@ class Product extends Model
     {
         parent::boot();
 
-        // Auto-sync CurrentStock when Product is created
+        // Auto-sync CurrentStock when Product is created (only for non-asset products)
         static::created(function ($product) {
-            \App\Models\CurrentStock::firstOrCreate(
-                ['product_id' => $product->id],
-                ['quantity' => $product->stock ?? 0, 'last_updated' => now()]
-            );
+            if (!$product->is_asset) {
+                \App\Models\CurrentStock::firstOrCreate(
+                    ['product_id' => $product->id],
+                    ['quantity' => $product->stock ?? 0, 'last_updated' => now()]
+                );
+            }
         });
 
-        // Auto-sync CurrentStock when Product stock is updated
+        // Auto-sync CurrentStock when Product stock is updated (only for non-asset products)
         static::updated(function ($product) {
-            if ($product->isDirty('stock')) {
+            if (!$product->is_asset && $product->isDirty('stock')) {
                 $currentStock = \App\Models\CurrentStock::firstOrCreate(
                     ['product_id' => $product->id],
                     ['quantity' => 0, 'last_updated' => now()]
@@ -53,11 +55,13 @@ class Product extends Model
         'descriptions',
         'stock',
         'minimum_stock',
+        'is_asset',
     ];
 
     protected $casts = [
         'stock' => 'integer',
         'minimum_stock' => 'integer',
+        'is_asset' => 'boolean',
     ];
 
     /**
@@ -76,5 +80,21 @@ class Product extends Model
     public function scopeOutOfStock($query)
     {
         return $query->where('stock', '<=', 0);
+    }
+
+    /**
+     * Scope for asset products (not counted as sales stock)
+     */
+    public function scopeAssetProducts($query)
+    {
+        return $query->where('is_asset', true);
+    }
+
+    /**
+     * Scope for sales products (regular stock)
+     */
+    public function scopeSalesProducts($query)
+    {
+        return $query->where('is_asset', false);
     }
 }

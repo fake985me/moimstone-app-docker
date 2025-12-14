@@ -117,6 +117,11 @@ const routes = [
                 component: () => import("../pages/MSAProjects.vue"),
             },
             {
+                path: "assets",
+                name: "Assets",
+                component: () => import("../pages/Assets.vue"),
+            },
+            {
                 path: "deliveries",
                 name: "Deliveries",
                 component: () => import("../pages/Deliveries.vue"),

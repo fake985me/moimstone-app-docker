@@ -125,6 +125,13 @@
           <span class="font-medium">MSA Project</span>
         </router-link>
 
+        <router-link to="/dashboard/assets"
+          class="flex items-center px-4 py-3 rounded-lg hover:bg-indigo-800 transition-all duration-200 hover:translate-x-1"
+          active-class="bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-lg">
+          <span class="mr-3 text-lg">🏷️</span>
+          <span class="font-medium">Asset Management</span>
+        </router-link>
+
         <router-link to="/dashboard/deliveries"
           class="flex items-center px-4 py-3 rounded-lg hover:bg-indigo-800 transition-all duration-200 hover:translate-x-1"
           active-class="bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-lg">
@@ -279,6 +286,10 @@ const pageTitle = computed(() => {
     'Purchases': 'Purchase Management',
     'Warranties': 'Warranty Management',
     'Lendings': 'Lending Management',
+    'RMAs': 'RMA Management',
+    'ProjectInvestments': 'Project Investment',
+    'MSAProjects': 'MSA Project',
+    'Assets': 'Asset Management',
     'Deliveries': 'Delivery Tracking',
     'History': 'Histori Transaksi',
     'SalesPeople': 'Sales Team',

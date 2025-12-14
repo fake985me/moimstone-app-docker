@@ -87,6 +87,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Sales People
     Route::apiResource('sales-people', App\Http\Controllers\Api\SalesPersonController::class);
 
+    // Assets
+    Route::get('/assets/filter-options', [App\Http\Controllers\Api\AssetController::class, 'filterOptions']);
+    Route::post('/assets/create-product', [App\Http\Controllers\Api\AssetController::class, 'createAssetProduct']);
+    Route::apiResource('assets', App\Http\Controllers\Api\AssetController::class);
+
     // Warranties
     Route::apiResource('warranties', App\Http\Controllers\Api\WarrantyController::class);
 

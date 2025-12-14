@@ -13,7 +13,11 @@ class StockController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = CurrentStock::with('product');
+            $query = CurrentStock::with('product')
+                // Exclude asset products from stock management
+                ->whereHas('product', function ($q) {
+                    $q->where('is_asset', false)->orWhereNull('is_asset');
+                });
 
             // Filter by low stock (using default threshold since min_stock removed)
             if ($request->has('low_stock') && $request->low_stock == 'true') {
