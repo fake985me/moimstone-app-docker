@@ -15,11 +15,11 @@
             v-if="slides[currentIndex].imgLeft || slides[currentIndex].midLeft || slides[currentIndex].midRight || slides[currentIndex].imgRight"
             class="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-6xl mx-auto">
             <img v-if="slides[currentIndex].imgLeft" :src="slides[currentIndex].imgLeft"
-              class="w-25 max-w-[220px] h-auto animate-fadeInLeft" />
+              class="w-52 max-w-[220px] h-auto animate-fadeInLeft" />
             <img v-if="slides[currentIndex].midLeft" :src="slides[currentIndex].midLeft"
-              class="w-70 max-w-[140px] h-auto animate-fadeInLeft" />
+              class="w-72 max-w-[140px] h-auto animate-fadeInLeft" />
             <img v-if="slides[currentIndex].midRight" :src="slides[currentIndex].midRight"
-              class="w-80 max-w-[160px] h-auto animate-fadeInRight" />
+              class="w-82 max-w-[160px] h-auto animate-fadeInRight" />
             <img v-if="slides[currentIndex].imgRight" :src="slides[currentIndex].imgRight"
               class="w-90 max-w-[180px] h-auto animate-fadeInRight" />
           </div>

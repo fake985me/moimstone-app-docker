@@ -4,7 +4,7 @@
     <p class="text-gray-800 mb-3">choose what you need</p>
 
     <!-- Tabs -->
-    <div class="flex flex-wrap gap-3 border-b mb-4 justify-center">
+    <div class="flex flex-wrap gap-3 mb-4 justify-center">
       <div
         v-for="(tab, i) in tabs"
         :key="i"
@@ -97,7 +97,7 @@
                 class="w-50 h-48 flex object-contain justify-center items-center mx-auto p-4"
               >
                 <div
-                  class="w-[80%] h-[80%] bg-primary-200 rounded-full flex items-center justify-center"
+                  class="w-[100%] h-[100%] bg-primary-200 rounded-full flex items-center justify-center"
                 >
                   <img
                     :src="product.image"

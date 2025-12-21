@@ -11,7 +11,7 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Navbar from './components/Navbar.vue';
-import CustomerView from './components/partial/CustomerView.vue';
+import CustomerView from './views/partial/CustomerView.vue';
 import Foo from './components/Footer.vue';
 import '../css/app.css';
 
