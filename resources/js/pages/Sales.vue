@@ -183,13 +183,27 @@
                 </div>
               </div>
             </div>
-            <div class="mt-4 text-right">
-              <p class="text-lg font-bold text-gray-900">Total: Rp {{ formatPrice(calculateTotal()) }}</p>
+            <div class="mt-4 text-right space-y-1">
+              <p class="text-sm text-gray-600">Subtotal: Rp {{ formatPrice(calculateTotal()) }}</p>
+              <div class="flex justify-end items-center gap-2">
+                <label class="text-sm text-gray-600">Tax:</label>
+                <select v-model="form.tax_type" @change="updateTaxCalculation" class="input w-32 text-sm">
+                  <option value="">No Tax</option>
+                  <option value="ppn">PPN (11%)</option>
+                  <option value="pph23">PPh 23 (2%)</option>
+                </select>
+              </div>
+              <p v-if="form.tax_type" class="text-sm text-gray-600">Tax Amount: Rp {{ formatPrice(calculateTax()) }}</p>
+              <p class="text-lg font-bold text-gray-900">Grand Total: Rp {{ formatPrice(calculateGrandTotal()) }}</p>
             </div>
           </div>
 
           <!-- Additional Info -->
           <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Discount</label>
+              <input v-model.number="form.discount_amount" type="number" step="0.01" class="input" placeholder="0" />
+            </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
               <select v-model="form.status" required class="input">
@@ -197,7 +211,7 @@
                 <option value="completed">Completed</option>
               </select>
             </div>
-            <div>
+            <div class="col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
               <textarea v-model="form.notes" rows="2" class="input"></textarea>
             </div>
@@ -437,6 +451,28 @@ const calculateTotal = () => {
   return form.value.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
 };
 
+const TAX_RATES = {
+  ppn: 11,
+  pph23: 2,
+};
+
+const calculateTax = () => {
+  const subtotal = calculateTotal();
+  const rate = TAX_RATES[form.value.tax_type] || 0;
+  return Math.round(subtotal * (rate / 100));
+};
+
+const calculateGrandTotal = () => {
+  const subtotal = calculateTotal();
+  const tax = calculateTax();
+  const discount = form.value.discount_amount || 0;
+  return subtotal + tax - discount;
+};
+
+const updateTaxCalculation = () => {
+  // This method triggers reactivity when tax type changes
+};
+
 const resetForm = () => {
   editMode.value = false;
   editId.value = null;
@@ -449,6 +485,8 @@ const resetForm = () => {
     sale_date: new Date().toISOString().split('T')[0],
     status: 'pending',
     notes: '',
+    tax_type: '',
+    discount_amount: 0,
     items: [{ product_id: '', quantity: 1, unit_price: 0 }],
   };
   error.value = '';

@@ -136,6 +136,17 @@ const routes = [
                 name: "SalesPeople",
                 component: () => import("../pages/SalesPeople.vue"),
             },
+            // Project Planning & Accounting
+            {
+                path: "project-planning",
+                name: "ProjectPlanning",
+                component: () => import("../pages/ProjectPlanning.vue"),
+            },
+            {
+                path: "accounting",
+                name: "Accounting",
+                component: () => import("../pages/Accounting.vue"),
+            },
             // CMS Content Management
             {
                 path: "cms/solutions",

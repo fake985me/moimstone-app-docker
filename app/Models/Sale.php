@@ -16,6 +16,12 @@ class Sale extends Model
         'customer_phone',
         'customer_address',
         'total_amount',
+        'subtotal',
+        'tax_type',
+        'tax_rate',
+        'tax_amount',
+        'discount_amount',
+        'grand_total',
         'status',
         'sales_person_id',
         'user_id',
@@ -25,6 +31,11 @@ class Sale extends Model
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'tax_rate' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'grand_total' => 'decimal:2',
         'sale_date' => 'date',
     ];
 
@@ -76,4 +87,64 @@ class Sale extends Model
     {
         return $this->hasOne(Delivery::class);
     }
+
+    /**
+     * Get the invoice for this sale
+     */
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class);
+    }
+
+    /**
+     * Calculate subtotal from items
+     */
+    public function calculateSubtotal()
+    {
+        return $this->items()->sum(\DB::raw('quantity * unit_price'));
+    }
+
+    /**
+     * Calculate tax amount based on subtotal and tax type
+     */
+    public function calculateTax($taxType = 'ppn')
+    {
+        $taxRate = TaxRate::getByCode($taxType);
+        if (!$taxRate) return 0;
+        
+        $subtotal = $this->subtotal ?: $this->calculateSubtotal();
+        return $taxRate->calculateTax($subtotal);
+    }
+
+    /**
+     * Calculate grand total (subtotal + tax - discount)
+     */
+    public function calculateGrandTotal()
+    {
+        $subtotal = $this->subtotal ?: 0;
+        $tax = $this->tax_amount ?: 0;
+        $discount = $this->discount_amount ?: 0;
+        
+        return $subtotal + $tax - $discount;
+    }
+
+    /**
+     * Apply tax calculations to the sale
+     */
+    public function applyTax($taxType = 'ppn')
+    {
+        $this->subtotal = $this->calculateSubtotal();
+        $this->tax_type = $taxType;
+        
+        $taxRate = TaxRate::getByCode($taxType);
+        if ($taxRate) {
+            $this->tax_rate = $taxRate->rate;
+            $this->tax_amount = $taxRate->calculateTax($this->subtotal);
+        }
+        
+        $this->grand_total = $this->calculateGrandTotal();
+        
+        return $this;
+    }
 }
+

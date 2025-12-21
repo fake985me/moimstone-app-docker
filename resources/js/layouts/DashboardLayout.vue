@@ -153,6 +153,25 @@
           <span class="font-medium">Sales Team</span>
         </router-link>
 
+        <!-- Project & Accounting Section -->
+        <div class="pt-4 mt-4 border-t border-indigo-700">
+          <p v-show="!sidebarCollapsed" class="px-4 text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">Project & Finance</p>
+
+          <router-link to="/dashboard/project-planning"
+            class="flex items-center px-4 py-3 rounded-lg hover:bg-indigo-800 transition-all duration-200 hover:translate-x-1"
+            active-class="bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-lg">
+            <span class="mr-3 text-lg">📋</span>
+            <span class="font-medium">Project Planning</span>
+          </router-link>
+
+          <router-link to="/dashboard/accounting"
+            class="flex items-center px-4 py-3 rounded-lg hover:bg-indigo-800 transition-all duration-200 hover:translate-x-1"
+            active-class="bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-lg">
+            <span class="mr-3 text-lg">💵</span>
+            <span class="font-medium">Accounting</span>
+          </router-link>
+        </div>
+
         <!-- CMS Section -->
         <div class="pt-4 mt-4 border-t border-indigo-700">
           <p v-show="!sidebarCollapsed" class="px-4 text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">Website Content</p>
@@ -293,6 +312,8 @@ const pageTitle = computed(() => {
     'Deliveries': 'Delivery Tracking',
     'History': 'Histori Transaksi',
     'SalesPeople': 'Sales Team',
+    'ProjectPlanning': 'Project Planning',
+    'Accounting': 'Accounting',
     'CmsSolutions': 'Solutions Management',
     'CmsProjects': 'Projects Management',
     'CmsSettings': 'Site Settings',

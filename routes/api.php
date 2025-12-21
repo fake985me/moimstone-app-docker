@@ -119,6 +119,35 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/msa-projects/{id}/close', [App\Http\Controllers\Api\MSAProjectController::class, 'close']);
     Route::apiResource('msa-projects', App\Http\Controllers\Api\MSAProjectController::class);
 
+    // Project Planning (comprehensive project management)
+    Route::get('/project-plans/summary', [App\Http\Controllers\Api\ProjectPlanController::class, 'summary']);
+    Route::post('/project-plans/{projectPlan}/start', [App\Http\Controllers\Api\ProjectPlanController::class, 'start']);
+    Route::post('/project-plans/{projectPlan}/complete', [App\Http\Controllers\Api\ProjectPlanController::class, 'complete']);
+    Route::post('/project-plans/{projectPlan}/cancel', [App\Http\Controllers\Api\ProjectPlanController::class, 'cancel']);
+    Route::post('/project-plans/{projectPlan}/milestones', [App\Http\Controllers\Api\ProjectPlanController::class, 'addMilestone']);
+    Route::put('/project-plans/{projectPlan}/milestones/{milestone}', [App\Http\Controllers\Api\ProjectPlanController::class, 'updateMilestone']);
+    Route::delete('/project-plans/{projectPlan}/milestones/{milestone}', [App\Http\Controllers\Api\ProjectPlanController::class, 'deleteMilestone']);
+    Route::post('/project-plans/{projectPlan}/materials', [App\Http\Controllers\Api\ProjectPlanController::class, 'addMaterial']);
+    Route::put('/project-plans/{projectPlan}/materials/{material}', [App\Http\Controllers\Api\ProjectPlanController::class, 'updateMaterial']);
+    Route::delete('/project-plans/{projectPlan}/materials/{material}', [App\Http\Controllers\Api\ProjectPlanController::class, 'deleteMaterial']);
+    Route::post('/project-plans/{projectPlan}/costs', [App\Http\Controllers\Api\ProjectPlanController::class, 'addCost']);
+    Route::put('/project-plans/{projectPlan}/costs/{cost}', [App\Http\Controllers\Api\ProjectPlanController::class, 'updateCost']);
+    Route::delete('/project-plans/{projectPlan}/costs/{cost}', [App\Http\Controllers\Api\ProjectPlanController::class, 'deleteCost']);
+    Route::apiResource('project-plans', App\Http\Controllers\Api\ProjectPlanController::class);
+
+    // Tax Rates
+    Route::get('/tax-rates/active', [App\Http\Controllers\Api\TaxRateController::class, 'active']);
+    Route::post('/tax-rates/{taxRate}/toggle', [App\Http\Controllers\Api\TaxRateController::class, 'toggle']);
+    Route::apiResource('tax-rates', App\Http\Controllers\Api\TaxRateController::class);
+
+    // Invoices & Accounting
+    Route::get('/invoices/tax-report', [App\Http\Controllers\Api\InvoiceController::class, 'taxReport']);
+    Route::get('/invoices/monthly-summary', [App\Http\Controllers\Api\InvoiceController::class, 'monthlySummary']);
+    Route::get('/invoices/{invoice}/pdf', [App\Http\Controllers\Api\InvoiceController::class, 'downloadPdf']);
+    Route::post('/invoices/{invoice}/mark-paid', [App\Http\Controllers\Api\InvoiceController::class, 'markAsPaid']);
+    Route::post('/invoices/{invoice}/mark-sent', [App\Http\Controllers\Api\InvoiceController::class, 'markAsSent']);
+    Route::apiResource('invoices', App\Http\Controllers\Api\InvoiceController::class);
+
     // Deliveries
     Route::apiResource('deliveries', App\Http\Controllers\Api\DeliveryController::class);
 
