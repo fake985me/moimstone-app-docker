@@ -14,13 +14,15 @@ class PurchaseItem extends Model
         'product_id',
         'quantity',
         'unit_price',
-        'subtotal'
+        'subtotal',
+        'is_for_asset'
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'is_for_asset' => 'boolean',
     ];
 
     /**

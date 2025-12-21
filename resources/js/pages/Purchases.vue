@@ -187,13 +187,23 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
               <select v-model="form.status" required class="input">
                 <option value="pending">Pending</option>
-                <option value="received">Received (Add to Stock)</option>
+                <option value="received">{{ form.is_for_asset ? 'Received (Create Assets)' : 'Received (Add to Stock)' }}</option>
               </select>
             </div>
             <div>
+              <label class="flex items-center space-x-2 h-full pt-6">
+                <input v-model="form.is_for_asset" type="checkbox" class="w-5 h-5 text-blue-600 rounded border-gray-300" />
+                <span class="text-sm font-medium text-gray-700">Purchase for Asset (not for sale)</span>
+              </label>
+            </div>
+            <div class="col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
               <textarea v-model="form.notes" rows="2" class="input"></textarea>
             </div>
+          </div>
+
+          <div v-if="form.is_for_asset" class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-sm text-amber-700">
+            <strong>Note:</strong> Pembelian ini akan dicatat sebagai Asset. Produk tidak akan masuk stock penjualan.
           </div>
 
           <div v-if="error" class="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-200">{{ error }}</div>
@@ -276,6 +286,7 @@ const form = ref({
   supplier_phone: '',
   order_date: new Date().toISOString().split('T')[0],
   status: 'received',
+  is_for_asset: false,
   notes: '',
   items: [{ product_id: '', quantity: 1, unit_price: 0 }],
 });
@@ -361,6 +372,7 @@ const resetForm = () => {
     supplier_phone: '',
     order_date: new Date().toISOString().split('T')[0],
     status: 'received',
+    is_for_asset: false,
     notes: '',
     items: [{ product_id: '', quantity: 1, unit_price: 0 }],
   };
@@ -389,6 +401,8 @@ const saveProduct = async () => {
   
   try {
     productForm.value.sku = `SKU-${Date.now()}`;
+    // Ensure stock is always 0 (not null)
+    productForm.value.stock = productForm.value.stock || 0;
     const response = await api.post('/products', productForm.value);
     
     // Add to products list

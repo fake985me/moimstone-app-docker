@@ -16,6 +16,7 @@ class Purchase extends Model
         'supplier_phone',
         'total_amount',
         'status',
+        'is_for_asset',
         'user_id',
         'order_date',
         'received_date',

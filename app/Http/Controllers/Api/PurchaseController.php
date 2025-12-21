@@ -65,12 +65,16 @@ class PurchaseController extends Controller
             'supplier_phone' => 'nullable|string',
             'order_date' => 'required|date',
             'status' => 'required|in:pending,received,cancelled',
+            'is_for_asset' => 'boolean',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.is_for_asset' => 'boolean',
         ]);
+
+        $isForAsset = $validated['is_for_asset'] ?? false;
 
         DB::beginTransaction();
         try {
@@ -82,6 +86,7 @@ class PurchaseController extends Controller
                 'supplier_phone' => $validated['supplier_phone'] ?? null,
                 'order_date' => $validated['order_date'],
                 'status' => $validated['status'],
+                'is_for_asset' => $isForAsset,
                 'notes' => $validated['notes'] ?? null,
                 'user_id' => auth()->id(),
                 'total_amount' => 0,
@@ -90,29 +95,53 @@ class PurchaseController extends Controller
 
             $totalAmount = 0;
 
-            // Create purchase items and add stock
+            // Create purchase items
             foreach ($validated['items'] as $item) {
                 $subtotal = $item['quantity'] * $item['unit_price'];
                 $totalAmount += $subtotal;
+                $itemIsForAsset = $item['is_for_asset'] ?? $isForAsset;
 
-                PurchaseItem::create([
+                $purchaseItem = PurchaseItem::create([
                     'purchase_id' => $purchase->id,
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'subtotal' => $subtotal,
+                    'is_for_asset' => $itemIsForAsset,
                 ]);
 
-                // Add stock if status is received
+                // If status is received
                 if ($validated['status'] === 'received') {
-                    $stockService = new StockSyncService();
-                    $stockService->addStock(
-                        $item['product_id'],
-                        $item['quantity'],
-                        'purchase',
-                        $purchase->id,
-                        "Purchase #{$purchase->po_number}"
-                    );
+                    if ($itemIsForAsset) {
+                        // Create assets for each quantity
+                        $product = Product::find($item['product_id']);
+                        for ($i = 0; $i < $item['quantity']; $i++) {
+                            \App\Models\Asset::create([
+                                'asset_code' => \App\Models\Asset::generateAssetCode(),
+                                'name' => $product->title ?? $product->name ?? 'Asset',
+                                'product_id' => $item['product_id'],
+                                'purchase_item_id' => $purchaseItem->id,
+                                'category' => $product->category ?? null,
+                                'brand' => $product->brand ?? null,
+                                'model' => $product->model ?? null,
+                                'condition' => 'good',
+                                'status' => 'active',
+                                'purchase_date' => $validated['order_date'],
+                                'purchase_price' => $item['unit_price'],
+                                'current_value' => $item['unit_price'],
+                            ]);
+                        }
+                    } else {
+                        // Add to stock (for non-asset items only)
+                        $stockService = new StockSyncService();
+                        $stockService->addStock(
+                            $item['product_id'],
+                            $item['quantity'],
+                            'purchase',
+                            $purchase->id,
+                            "Purchase #{$purchase->po_number}"
+                        );
+                    }
                 }
             }
 
