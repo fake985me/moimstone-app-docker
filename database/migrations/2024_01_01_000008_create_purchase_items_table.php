@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('unit_price', 12, 2);
             $table->decimal('subtotal', 15, 2);
+            $table->boolean('is_for_asset')->default(false);
             $table->timestamps();
         });
     }

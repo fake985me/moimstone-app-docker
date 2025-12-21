@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('deliveries', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('sale_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('po_number')->nullable();
             $table->string('project_name')->nullable();
             $table->enum('status', ['preparing', 'shipped', 'in_transit', 'delivered', 'cancelled'])->default('preparing');

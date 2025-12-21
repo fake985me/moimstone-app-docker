@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('contact_info', function (Blueprint $table) {
             $table->id();
             $table->string('type'); // email, phone, address, social
-            $table->string('label');
+            $table->string('label')->nullable();
             $table->string('value');
             $table->string('icon')->nullable();
             $table->integer('order')->default(0);

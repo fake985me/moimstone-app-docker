@@ -19,6 +19,15 @@ return new class extends Migration
             $table->string('customer_phone')->nullable();
             $table->text('customer_address')->nullable();
             $table->decimal('total_amount', 15, 2)->default(0);
+            
+            // Tax fields
+            $table->decimal('subtotal', 15, 2)->default(0);
+            $table->string('tax_type')->nullable();
+            $table->decimal('tax_rate', 5, 2)->default(0);
+            $table->decimal('tax_amount', 15, 2)->default(0);
+            $table->decimal('discount_amount', 15, 2)->default(0);
+            $table->decimal('grand_total', 15, 2)->default(0);
+            
             $table->enum('status', ['pending', 'completed', 'cancelled'])->default('pending');
             $table->foreignId('sales_person_id')->nullable()->constrained('sales_people')->onDelete('set null');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
