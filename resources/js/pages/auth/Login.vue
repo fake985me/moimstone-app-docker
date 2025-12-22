@@ -1,19 +1,22 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center p-6">
+
+  <div class="min-h-screen bg-linear-to-br from-slate-800 via-sky-900 to-gray-500 flex items-center justify-center p-6">
     <!-- Animated Background -->
     <div class="absolute inset-0 overflow-hidden opacity-20">
       <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500 rounded-full filter blur-3xl animate-pulse"></div>
       <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500 rounded-full filter blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
     </div>
 
+    
+
     <!-- Login Card -->
     <div class="relative z-10 w-full max-w-md">
       <!-- Logo & Title -->
       <div class="text-center mb-8 animate-fade-in">
-        <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl mb-4 shadow-2xl">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-linear-to-r from-cyan-500 to-blue-600 rounded-2xl mb-4 shadow-2xl">
           <span class="text-4xl">📦</span>
         </div>
-        <h1 class="text-4xl font-bold text-white mb-2">Warehouse Pro</h1>
+        <h1 class="text-4xl font-bold text-white mb-2">Warehouse MDI</h1>
         <p class="text-gray-300">Sign in to your account</p>
       </div>
 
@@ -49,7 +52,7 @@
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-cyan-500/50 disabled:opacity-50"
+            class="w-full py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-cyan-500/50 disabled:opacity-50"
           >
             {{ loading ? 'Signing in...' : 'Sign In' }}
           </button>
@@ -88,7 +91,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '../../stores/auth';
 
 const router = useRouter();
 const authStore = useAuthStore();

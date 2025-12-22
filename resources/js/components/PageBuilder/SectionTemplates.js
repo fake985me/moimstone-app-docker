@@ -33,7 +33,7 @@ export const sectionTemplates = [
     template: {
       section_type: 'hero',
       content: {
-        heading: 'Transform Your Business',
+        heading: 'Transform Your Business apa yang ini',
         subheading: 'Innovative solutions for modern challenges',
         button_text: 'Learn More',
         button_url: '#',

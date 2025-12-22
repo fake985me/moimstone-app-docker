@@ -1,18 +1,18 @@
 <template>
   <div
     :class="[
-      'fixed inset-y-0 left-0 bg-gradient-to-b from-indigo-900 to-indigo-800 text-white shadow-2xl flex flex-col transition-all duration-300',
+      'fixed inset-y-0 left-0 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-650 shadow-2xl flex flex-col transition-all duration-300',
       collapsed ? 'w-20' : 'w-64'
     ]">
     <!-- Logo & Toggle Button -->
-    <div class="flex items-center justify-center h-16 bg-indigo-950 border-b border-indigo-700 flex-shrink-0 relative">
-      <h1 v-show="!collapsed" class="text-xl font-bold tracking-wide">📦 MDI Stock Management</h1>
+    <div class="flex items-center justify-center h-16 bg-white shadow-md border-b border-gray-200 flex-shrink-0 relative">
+      <h1 v-show="!collapsed" class="text-base tracking-wide">📦 MDI Stock Management</h1>
       <h1 v-show="collapsed" class="text-2xl">📦</h1>
       
       <!-- Toggle Button -->
       <button 
         @click="$emit('toggle')"
-        class="absolute -right-3 top-1/2 transform -translate-y-1/2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-50">
+        class="absolute -right-3 top-1/2 transform -translate-y-1/2 bg-gray-500 hover:bg-gray-500 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-50">
         <svg v-if="!collapsed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
         </svg>

@@ -69,7 +69,7 @@
         <div
           v-for="(product, i) in pagedDesktop[desktopIndex]"
           :key="i"
-          class="relative h-[450px] bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-1"
+          class="relative h-[320px] bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-1"
         >
           <RouterLink
             :to="`/product/${product.id}`"
@@ -153,14 +153,14 @@
         class="mx-auto w-[280px] min-h-[130px] flex flex-col items-center relative"
       >
         <div
-          class="relative w-[280px] h-[500px] bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-1"
+          class="relative w-[300px] h-[450px] bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-1"
         >
           <RouterLink :to="`/product/${pagedMobile[mobileIndex].id}`">
             <!-- Default logo (kiri) -->
             <img
               :src="defaultLogo"
               alt="default logo"
-              class="flex w-full h-8 top-0 left-0 ml-2"
+              class="flex w-full h-10 top-0 left-0 ml-2"
             />
 
             <!-- Brand logo dinamis (kanan) -->
@@ -168,7 +168,7 @@
               v-if="getBrandLogo(pagedMobile[mobileIndex].brand)"
               :src="getBrandLogo(pagedMobile[mobileIndex].brand)"
               :alt="pagedMobile[mobileIndex].brand"
-              class="absolute w-full h-8 top-0 right-0 mr-3"
+              class="absolute w-full h-10 top-0 right-0 mr-3"
             />
 
             <div
@@ -183,7 +183,7 @@
                   <img
                     :src="pagedMobile[mobileIndex].image"
                     alt=""
-                    class="w-32 h-28 object-contain mb-2 mx-auto"
+                    class="w-42 h-auto object-contain mb-2 mx-auto"
                   />
                 </div>
               </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="pt-4 mt-4 border-t border-indigo-700">
+  <div class="pt-4 mt-4 border-t border-gray-700">
     <p v-show="!collapsed" class="px-4 text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">
       {{ title }}
     </p>
