@@ -29,6 +29,10 @@ class PageController extends Controller
             'meta_description' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
             'template_id' => 'nullable|exists:page_templates,id',
+            'show_in_nav' => 'nullable|boolean',
+            'nav_order' => 'nullable|integer',
+            'nav_parent' => 'nullable|string',
+            'nav_label' => 'nullable|string',
         ]);
 
         // Auto-generate slug if not provided
@@ -84,11 +88,47 @@ class PageController extends Controller
             'slug' => 'sometimes|string|unique:pages,slug,' . $id,
             'meta_description' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
+            'show_in_nav' => 'nullable|boolean',
+            'nav_order' => 'nullable|integer',
+            'nav_parent' => 'nullable|string',
+            'nav_label' => 'nullable|string',
         ]);
 
         $page->update($validated);
         
         return response()->json($page->load('sections'));
+    }
+
+    /**
+     * Get pages for navigation (public endpoint)
+     * Returns all published pages, sorted by nav_order
+     */
+    public function getNavigation(Request $request)
+    {
+        $query = Page::published()
+            ->select('id', 'slug', 'title', 'nav_label', 'nav_order', 'nav_parent', 'show_in_nav');
+
+        // If ?nav_only=true, only return pages with show_in_nav enabled
+        // Otherwise, return all published pages
+        if ($request->boolean('nav_only')) {
+            $query->where('show_in_nav', true);
+        }
+
+        $pages = $query->orderBy('nav_order')
+            ->get()
+            ->map(function ($page) {
+                return [
+                    'id' => $page->id,
+                    'name' => $page->nav_label ?: $page->title,
+                    'href' => '/pages/' . $page->slug,
+                    'slug' => $page->slug,
+                    'order' => $page->nav_order ?? 100,
+                    'parent' => $page->nav_parent,
+                    'show_in_nav' => $page->show_in_nav,
+                ];
+            });
+
+        return response()->json($pages);
     }
 
     public function destroy($id)

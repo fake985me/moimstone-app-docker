@@ -6,10 +6,12 @@ import CTASection from './CTASection.vue'
 import TestimonialsSection from './TestimonialsSection.vue'
 import ContactSection from './ContactSection.vue'
 import ContentSection from './ContentSection.vue'
+import CarouselSection from './CarouselSection.vue'
 
 // Component mapping for dynamic rendering
 export const SECTION_COMPONENTS = {
   hero: HeroSection,
+  carousel: CarouselSection,
   features: FeaturesSection,
   gallery: GallerySection,
   cta: CTASection,
@@ -37,6 +39,37 @@ export const SECTION_TYPES = [
       textAlign: 'center',
       overlay: true,
       overlayOpacity: 0.5,
+    },
+  },
+  {
+    type: 'carousel',
+    name: 'Carousel Hero',
+    icon: '🎠',
+    description: 'Hero section with multiple slides, auto-play, and navigation',
+    defaultContent: {
+      slides: [
+        {
+          title: 'Welcome to Our Platform',
+          subtitle: 'Build amazing things with our solutions',
+          ctaText: 'Get Started',
+          ctaLink: '/product',
+          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        },
+        {
+          title: 'Innovative Solutions',
+          subtitle: 'For modern challenges',
+          ctaText: 'Learn More',
+          ctaLink: '/solutions',
+          gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        },
+      ],
+    },
+    defaultSettings: {
+      height: 'full',
+      autoplay: true,
+      interval: 7500,
+      overlay: true,
+      overlayOpacity: 0.3,
     },
   },
   {
@@ -134,6 +167,7 @@ export const SECTION_TYPES = [
 
 export {
   HeroSection,
+  CarouselSection,
   FeaturesSection,
   GallerySection,
   CTASection,

@@ -39,6 +39,7 @@ Route::prefix('guest')->group(function () {
 
     // Page Builder - Public Pages
     Route::get('/pages/slug/{slug}', [\App\Http\Controllers\Api\PageController::class, 'showBySlug']);
+    Route::get('/navigation', [\App\Http\Controllers\Api\PageController::class, 'getNavigation']);
 });
 
 // Protected routes

@@ -34,6 +34,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sections</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Nav</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
@@ -62,6 +63,21 @@
               >
                 {{ page.is_published ? 'Published' : 'Draft' }}
               </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <button 
+                @click="toggleNav(page)"
+                :class="[
+                  'px-2 py-1 text-xs font-semibold rounded-full transition-colors',
+                  page.show_in_nav 
+                    ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ]"
+                :disabled="!page.is_published"
+                :title="!page.is_published ? 'Page must be published first' : ''"
+              >
+                {{ page.show_in_nav ? '✓ In Nav' : '○ Hidden' }}
+              </button>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ formatDate(page.updated_at) }}
@@ -115,6 +131,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '../services/api'
+import { useNavigationStore } from '../stores/navigation'
+
+const navigationStore = useNavigationStore()
 
 const pages = ref([])
 const loading = ref(true)
@@ -140,9 +159,30 @@ const togglePublish = async (page) => {
     const endpoint = page.is_published ? 'unpublish' : 'publish'
     await api.post(`/pages/${page.id}/${endpoint}`)
     await loadPages()
+    // Refresh navigation when publish status changes
+    await navigationStore.refreshNavigation()
   } catch (err) {
     console.error('Failed to toggle publish status:', err)
     alert('Failed to update page status')
+  }
+}
+
+const toggleNav = async (page) => {
+  if (!page.is_published) {
+    alert('Page must be published first to appear in navigation')
+    return
+  }
+
+  try {
+    await api.put(`/pages/${page.id}`, {
+      show_in_nav: !page.show_in_nav
+    })
+    await loadPages()
+    // Refresh navigation to update navbar immediately
+    await navigationStore.refreshNavigation()
+  } catch (err) {
+    console.error('Failed to toggle nav status:', err)
+    alert('Failed to toggle navigation status')
   }
 }
 

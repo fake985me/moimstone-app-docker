@@ -171,6 +171,54 @@
             />
           </div>
 
+          <!-- Navigation Settings -->
+          <div class="border-t border-gray-200 pt-4 mt-4">
+            <h4 class="text-md font-semibold text-gray-800 mb-3">🧭 Navigation Settings</h4>
+            
+            <div class="flex items-center gap-3 mb-3">
+              <input
+                type="checkbox"
+                id="showInNav"
+                v-model="page.show_in_nav"
+                class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+              />
+              <label for="showInNav" class="text-sm text-gray-700">Show this page in navigation menu</label>
+            </div>
+
+            <div v-if="page.show_in_nav" class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nav Label</label>
+                <input
+                  v-model="page.nav_label"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Menu label (default: page title)"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nav Order</label>
+                <input
+                  type="number"
+                  v-model.number="page.nav_order"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="100"
+                />
+                <p class="text-xs text-gray-500 mt-1">Lower = appears first</p>
+              </div>
+              <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Parent Menu (optional)</label>
+                <select
+                  v-model="page.nav_parent"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">-- Top Level (no parent) --</option>
+                  <option value="Product">Product</option>
+                  <option value="Projects">Projects</option>
+                  <option value="Service & Solutions">Service & Solutions</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div v-if="error" class="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
             {{ error }}
           </div>
@@ -196,9 +244,11 @@ import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
 import DragDropBuilder from '../components/PageBuilder/DragDropBuilder.vue'
 import SectionRenderer from '../components/PageBuilder/SectionRenderer.vue'
+import { useNavigationStore } from '../stores/navigation'
 
 const route = useRoute()
 const router = useRouter()
+const navigationStore = useNavigationStore()
 
 const isEdit = computed(() => !!route.params.id)
 const loading = ref(false)
@@ -213,6 +263,10 @@ const page = ref({
   slug: '',
   meta_description: '',
   meta_keywords: '',
+  show_in_nav: false,
+  nav_order: 100,
+  nav_parent: '',
+  nav_label: '',
 })
 
 const sections = ref([])
@@ -238,6 +292,10 @@ const loadPage = async () => {
       slug: data.slug,
       meta_description: data.meta_description || '',
       meta_keywords: data.meta_keywords || '',
+      show_in_nav: data.show_in_nav || false,
+      nav_order: data.nav_order || 100,
+      nav_parent: data.nav_parent || '',
+      nav_label: data.nav_label || '',
     }
 
     sections.value = (data.sections || []).map(section => ({
@@ -415,6 +473,11 @@ const savePage = async () => {
           order: section.order,
         })
       }
+    }
+
+    // Refresh navigation to update navbar if show_in_nav changed
+    if (page.value.show_in_nav) {
+      await navigationStore.refreshNavigation()
     }
 
     router.push('/dashboard/pages')

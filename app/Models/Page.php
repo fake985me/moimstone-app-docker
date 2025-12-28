@@ -19,10 +19,15 @@ class Page extends Model
         'template_id',
         'created_by',
         'updated_by',
+        'show_in_nav',
+        'nav_order',
+        'nav_parent',
+        'nav_label',
     ];
 
     protected $casts = [
         'is_published' => 'boolean',
+        'show_in_nav' => 'boolean',
         'published_at' => 'datetime',
     ];
 
@@ -44,5 +49,12 @@ class Page extends Model
     public function scopeBySlug($query, $slug)
     {
         return $query->where('slug', $slug);
+    }
+
+    public function scopeForNavigation($query)
+    {
+        return $query->where('show_in_nav', true)
+            ->where('is_published', true)
+            ->orderBy('nav_order');
     }
 }

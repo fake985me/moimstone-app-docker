@@ -159,72 +159,28 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { Disclosure } from '@headlessui/vue'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { useNavigationStore } from '../stores/navigation'
 
 const route = useRoute()
+const navigationStore = useNavigationStore()
 const dropdownOpen = ref(null)
-const navigation = ref([
-  { name: 'Home', href: '/' },
-  {
-    name: 'Product',
-    href: '/product',
-    children: [
-      {
-        name: 'XGSPON', href: '/product?category=XGSPON', children: [
-          { name: 'OLT', href: '/product?category=XGSPON&sub=OLT' },
-          { name: 'ONT', href: '/product?category=XGSPON&sub=ONT' },
-          { name: 'ONU', href: '/product?category=XGSPON&sub=ONU' },
-          { name: 'ONU PoE', href: '/product?category=XGSPON&sub=ONU+PoE' },
-          { name: 'XGSPON Stick', href: '/product?category=XGSPON&sub=STICK' },
-        ]
-      },
-      {
-        name: 'GPON', href: '/product?category=GPON',
-        children: [
-          { name: 'OLT', href: '/product?category=GPON&sub=GPON+OLT' },
-          { name: 'ONT', href: '/product?category=GPON&sub=ONT' },
-          { name: 'ONU', href: '/product?category=GPON&sub=ONU' },
-          { name: 'ONU PoE', href: '/product?category=GPON&sub=ONU+PoE' },
-          { name: 'GPON Stick', href: '/product?category=GPON&sub=GPON+STICK' },
-        ],
-      },
-      {
-        name: 'SWITCH', href: '/product?category=Switch',
-        children: [
-          { name: 'Core Switch', href: '/product?category=SWITCH&sub=BACKBONE+SWITCH' },
-          { name: 'L3 Switch', href: '/product?category=SWITCH&sub=L3+SWITCH' },
-          { name: 'L2 Switch', href: '/product?category=SWITCH&sub=L2+SWITCH' },
-          { name: 'PoE Switch', href: '/product?category=SWITCH&sub=PoE+SWITCH' },
-        ],
-      },
-      {
-        name: 'WIFI', href: '/product?category=WIRELESS',
-        children: [
-          { name: 'Access Point Indoor', href: '/product?category=WIRELESS&sub=Access+Point+Indoor' },
-          { name: 'Access Point Outdoor', href: '/product?category=WIRELESS&sub=Access+Point+Outdoor' },
-          { name: 'Controller', href: '/product?category=WIRELESS&sub=AP+Controller' },
-        ],
-      },
-    ]
-  },
-  { name: 'Service & Solutions', href: '/solutions' },
-  {
-    name: 'Projects', href: '/project',
-    children: [
-      { name: 'ISP Customer', href: '/project?id=ispcustomer' },
-      { name: 'Managed Services', href: '/project?id=managedservices' },
-      { name: 'FTTX Project', href: '/project?id=fttxproject' },
-    ]
-  },
-  {
-    name: 'Contact',
-    href: '/contact',
-  },
-])
+
+// Use navigation from store (combines default + dynamic items)
+const navigation = computed(() => navigationStore.navigationItems)
+
+// Fetch dynamic navigation on mount
+onMounted(async () => {
+  await navigationStore.fetchDynamicNavigation()
+  
+  if (route.query.id) {
+    scrollToSection(route.query.id)
+  }
+})
 
 const isCurrent = (item) => {
   if (!item.href) return false
@@ -263,15 +219,10 @@ function scrollToSection(id) {
   })
 }
 
-onMounted(() => {
-  if (route.query.id) {
-    scrollToSection(route.query.id)
-  }
-})
-
 watch(() => route.query.id, (newId) => {
   if (newId) {
     scrollToSection(newId)
   }
 })
 </script>
+
