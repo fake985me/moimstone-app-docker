@@ -1,11 +1,10 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Sidebar Component -->
-    <Sidebar 
-      :collapsed="sidebarCollapsed" 
-      :is-super-admin="authStore.isSuperAdmin"
-      @toggle="toggleSidebar" 
-    />
+    <Sidebar :collapsed="sidebarCollapsed" :is-super-admin="authStore.isSuperAdmin" :user-role="authStore.user?.role"
+      @toggle="toggleSidebar" />
+
+    <MobileSidebar v-if="mobileOpen" @close="mobileOpen = false" />
 
     <!-- Main Content Area -->
     <div :class="['transition-all duration-300', sidebarCollapsed ? 'ml-20' : 'ml-64']">
@@ -43,67 +42,72 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
-import Sidebar from '../components/Sidebar.vue';
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
+import Sidebar from '../components/Sidebar.vue'
+import MobileSidebar from '../components/MobileSidebar.vue' // ✅ WAJIB
 
-// Sidebar collapse state
-const sidebarCollapsed = ref(false);
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
-// Load from localStorage
+// Sidebar states
+const sidebarCollapsed = ref(false)
+const mobileOpen = ref(false) // ✅ WAJIB
+
 onMounted(() => {
-  const saved = localStorage.getItem('sidebar-collapsed');
+  const saved = localStorage.getItem('sidebar-collapsed')
   if (saved !== null) {
-    sidebarCollapsed.value = JSON.parse(saved);
+    sidebarCollapsed.value = JSON.parse(saved)
   }
-});
+})
 
-// Toggle function
 const toggleSidebar = () => {
-  sidebarCollapsed.value = !sidebarCollapsed.value;
-  localStorage.setItem('sidebar-collapsed', JSON.stringify(sidebarCollapsed.value));
-};
+  sidebarCollapsed.value = !sidebarCollapsed.value
+  localStorage.setItem(
+    'sidebar-collapsed',
+    JSON.stringify(sidebarCollapsed.value)
+  )
+}
 
 const pageTitle = computed(() => {
   const titles = {
-    'Dashboard': 'Dashboard',
-    'Products': 'Product Management',
-    'Categories': 'Category Management',
-    'Stock': 'Stock Management',
-    'Sales': 'Sales Management',
-    'Purchases': 'Purchase Management',
-    'Warranties': 'Warranty Management',
-    'Lendings': 'Lending Management',
-    'RMAs': 'RMA Management',
-    'ProjectInvestments': 'Project Investment',
-    'MSAProjects': 'MSA Project',
-    'Assets': 'Asset Management',
-    'Deliveries': 'Delivery Tracking',
-    'History': 'Histori Transaksi',
-    'SalesPeople': 'Sales Team',
-    'ProjectPlanning': 'Project Planning',
-    'Accounting': 'Accounting',
-    'CmsSolutions': 'Solutions Management',
-    'CmsProjects': 'Projects Management',
-    'CmsSettings': 'Site Settings',
-    'CmsContact': 'Contact Information',
-    'CmsCarousel': 'Carousel Management',
-    'PublicProducts': 'Public Products Management',
-    'Pages': 'Page Builder',
-    'PageCreate': 'Create Page',
-    'PageEdit': 'Edit Page',
-    'Users': 'User Management',
-  };
-  return titles[route.name] || 'Dashboard';
-});
+    Dashboard: 'Dashboard',
+    Products: 'Product Management',
+    Categories: 'Category Management',
+    Stock: 'Stock Management',
+    Sales: 'Sales Management',
+    Purchases: 'Purchase Management',
+    Warranties: 'Warranty Management',
+    Lendings: 'Lending Management',
+    RMAs: 'RMA Management',
+    ProjectInvestments: 'Project Investment',
+    MSAProjects: 'MSA Project',
+    Assets: 'Asset Management',
+    Deliveries: 'Delivery Tracking',
+    History: 'Histori Transaksi',
+    SalesPeople: 'Sales Team',
+    ProjectPlanning: 'Project Planning',
+    Accounting: 'Accounting',
+    CmsSolutions: 'Solutions Management',
+    CmsProjects: 'Projects Management',
+    CmsSettings: 'Site Settings',
+    CmsContact: 'Contact Information',
+    CmsCarousel: 'Carousel Management',
+    PublicProducts: 'Public Products Management',
+    Pages: 'Page Builder',
+    PageCreate: 'Create Page',
+    PageEdit: 'Edit Page',
+    Users: 'User Management',
+  }
+
+  return titles[route.name] || 'Dashboard'
+})
 
 const handleLogout = async () => {
-  await authStore.logout();
-  router.push('/login');
-};
+  await authStore.logout()
+  router.push('/login')
+}
 </script>

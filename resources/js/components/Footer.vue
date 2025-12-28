@@ -1,6 +1,6 @@
 <template>
   <footer class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 py-16 px-2">
-    <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:justify-between gap-4">
+    <div class="mx-auto px-6 flex flex-col md:flex-row md:justify-between gap-4">
       <!-- Logo & Description -->
       <div class="w-full md:w-1/3">
         <a href="/" class="flex items-center space-x-2">

@@ -1,84 +1,253 @@
 <template>
-  <div
-    :class="[
-      'fixed inset-y-0 left-0 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-650 shadow-2xl flex flex-col transition-all duration-300',
-      collapsed ? 'w-20' : 'w-64'
-    ]">
-    <!-- Logo & Toggle Button -->
-    <div class="flex items-center justify-center h-16 bg-white shadow-md border-b border-gray-200 flex-shrink-0 relative">
-      <h1 v-show="!collapsed" class="text-base tracking-wide">📦 MDI Stock Management</h1>
-      <h1 v-show="collapsed" class="text-2xl">📦</h1>
+  <aside :class="[
+    'sidebar',
+    collapsed ? 'sidebar-collapsed' : 'sidebar-expanded'
+  ]">
+    <!-- Logo Header -->
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <h1 v-show="!collapsed" class="logo-text">
+          <span class="logo-icon">📦</span>
+          <span class="logo-name">MDI Stock</span>
+        </h1>
+        <span v-show="collapsed" class="logo-icon-collapsed">📦</span>
+      </div>
       
       <!-- Toggle Button -->
-      <button 
-        @click="$emit('toggle')"
-        class="absolute -right-3 top-1/2 transform -translate-y-1/2 bg-gray-500 hover:bg-gray-500 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-50">
-        <svg v-if="!collapsed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-        </svg>
-        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+      <button class="toggle-btn" @click="$emit('toggle')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
     </div>
 
-    <!-- Navigation - Scrollable -->
-    <nav class="flex-1 overflow-y-auto mt-6 px-4 space-y-1 pb-6">
-      <!-- Main Menu -->
-      <SidebarLink to="/" icon="🏠" label="Home" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard" icon="📊" label="Dashboard" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/products" icon="📦" label="Products" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/categories" icon="📑" label="Categories" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/stock" icon="📈" label="Stock Management" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/sales" icon="💰" label="Sales" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/purchases" icon="🛒" label="Purchases" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/warranties" icon="🛡️" label="Warranties" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/lendings" icon="🔄" label="Lendings" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/rmas" icon="↩️" label="RMA Management" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/project-investments" icon="📊" label="Project Investment" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/msa-projects" icon="🔧" label="MSA Project" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/assets" icon="🏷️" label="Asset Management" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/deliveries" icon="🚚" label="Deliveries" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/history" icon="📜" label="History" :collapsed="collapsed" />
-      <SidebarLink to="/dashboard/sales-people" icon="👥" label="Sales Team" :collapsed="collapsed" />
-
-      <!-- Project & Accounting Section -->
-      <SidebarSection title="Project & Finance" :collapsed="collapsed">
-        <SidebarLink to="/dashboard/project-planning" icon="📋" label="Project Planning" :collapsed="collapsed" />
-        <SidebarLink to="/dashboard/accounting" icon="💵" label="Accounting" :collapsed="collapsed" />
-      </SidebarSection>
-
-      <!-- CMS Section -->
-      <SidebarSection title="Website Content" :collapsed="collapsed">
-        <SidebarLink to="/dashboard/cms/solutions" icon="💡" label="Solutions" :collapsed="collapsed" />
-        <SidebarLink to="/dashboard/cms/projects" icon="🚀" label="Projects" :collapsed="collapsed" />
-        <SidebarLink to="/dashboard/cms/settings" icon="🎨" label="Site Settings" :collapsed="collapsed" />
-        <SidebarLink to="/dashboard/cms/contact" icon="📞" label="Contact Info" :collapsed="collapsed" />
-        <SidebarLink to="/dashboard/cms/carousel" icon="🎠" label="Carousel" :collapsed="collapsed" />
-        <SidebarLink to="/dashboard/cms/public-products" icon="📦" label="Public Products" :collapsed="collapsed" />
-        <SidebarLink to="/dashboard/pages" icon="📄" label="Pages" :collapsed="collapsed" />
-      </SidebarSection>
-
-      <!-- Admin Only -->
-      <SidebarLink v-if="isSuperAdmin" to="/dashboard/users" icon="⚙️" label="User Management" :collapsed="collapsed" class="mt-4" />
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+      <template v-for="section in filteredMenuSections" :key="section.title">
+        <SidebarSection :title="section.title" :collapsed="collapsed">
+          <SidebarMenuItem
+            v-for="item in section.items"
+            :key="item.name"
+            :item="item"
+            :collapsed="collapsed"
+          />
+        </SidebarSection>
+      </template>
     </nav>
-  </div>
+  </aside>
 </template>
 
 <script setup>
-import SidebarLink from './SidebarLink.vue';
-import SidebarSection from './SidebarSection.vue';
+import { computed } from 'vue'
+import SidebarSection from './SidebarSection.vue'
+import SidebarMenuItem from './SidebarMenuItem.vue'
 
-defineProps({
-  collapsed: {
-    type: Boolean,
-    default: false
-  },
-  isSuperAdmin: {
-    type: Boolean,
-    default: false
+const props = defineProps({
+  collapsed: Boolean,
+  isSuperAdmin: Boolean,
+  userRole: {
+    type: String,
+    default: 'admin'
   }
-});
+})
 
-defineEmits(['toggle']);
+defineEmits(['toggle'])
+
+const menuSections = [
+  {
+    title: 'MAIN NAVIGATION',
+    items: [
+      { name: 'Home', icon: 'home', to: '/', roles: ['admin', 'staff', 'viewer'] },
+      { name: 'Dashboard', icon: 'dashboard', to: '/dashboard', roles: ['admin', 'staff', 'viewer'] },
+      { name: 'Products', icon: 'products', to: '/dashboard/products', roles: ['admin', 'staff'] }
+    ]
+  },
+  {
+    title: 'INVENTORY',
+    items: [
+      {
+        name: 'Stock Management',
+        icon: 'stock',
+        roles: ['admin', 'staff'],
+        children: [
+          { name: 'Stock Overview', to: '/dashboard/stock', roles: ['admin', 'staff'] },
+          { name: 'Categories', to: '/dashboard/categories', roles: ['admin', 'staff'] }
+        ]
+      },
+      {
+        name: 'Transactions',
+        icon: 'sales',
+        roles: ['admin', 'staff'],
+        children: [
+          { name: 'Sales', to: '/dashboard/sales', roles: ['admin', 'staff'] },
+          { name: 'Purchases', to: '/dashboard/purchases', roles: ['admin', 'staff'] }
+        ]
+      }
+    ]
+  },
+  {
+    title: 'SERVICES',
+    items: [
+      { name: 'Warranties', icon: 'forms', to: '/dashboard/warranties', roles: ['admin', 'staff'] },
+      { name: 'Lendings', icon: 'components', to: '/dashboard/lendings', roles: ['admin', 'staff'] },
+      { name: 'RMA Management', icon: 'elements', to: '/dashboard/rmas', roles: ['admin', 'staff'] }
+    ]
+  },
+  {
+    title: 'PROJECTS',
+    items: [
+      { name: 'Project Investment', icon: 'chart', to: '/dashboard/project-investments', roles: ['admin', 'staff'] },
+      { name: 'MSA Project', icon: 'settings', to: '/dashboard/msa-projects', roles: ['admin', 'staff'] },
+      { name: 'Asset Management', icon: 'table', to: '/dashboard/assets', roles: ['admin', 'staff'] }
+    ]
+  },
+  {
+    title: 'CMS',
+    items: [
+      {
+        name: 'Website Content',
+        icon: 'pages',
+        roles: ['admin'],
+        children: [
+          { name: 'Solutions', to: '/dashboard/cms/solutions', roles: ['admin'] },
+          { name: 'Projects', to: '/dashboard/cms/projects', roles: ['admin'] },
+          { name: 'Site Settings', to: '/dashboard/cms/settings', roles: ['admin'] },
+          { name: 'Contact Info', to: '/dashboard/cms/contact', roles: ['admin'] },
+          { name: 'Carousel', to: '/dashboard/cms/carousel', roles: ['admin'] },
+          { name: 'Public Products', to: '/dashboard/cms/public-products', roles: ['admin'] },
+          { name: 'Pages', to: '/dashboard/pages', roles: ['admin'] }
+        ]
+      }
+    ]
+  },
+  {
+    title: 'ADMINISTRATION',
+    items: [
+      { name: 'User Management', icon: 'users', to: '/dashboard/users', roles: ['admin'], superAdminOnly: true }
+    ]
+  }
+]
+
+const filteredMenuSections = computed(() => {
+  return menuSections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+        if (item.superAdminOnly && !props.isSuperAdmin) return false
+        if (props.isSuperAdmin) return true
+        return item.roles?.includes(props.userRole)
+      })
+    }))
+    .filter(section => section.items.length > 0)
+})
 </script>
+
+<style scoped>
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.sidebar-expanded {
+  width: 260px;
+}
+
+.sidebar-collapsed {
+  width: 70px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  min-height: 64px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.logo-text {
+  display: flex;
+  align-items: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+.logo-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.logo-icon-collapsed {
+  font-size: 1.75rem;
+}
+
+.logo-name {
+  background: linear-gradient(135deg, #254692 0%, #03185c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+  background: #e5e7eb;
+  color: #2f62a0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0;
+}
+
+/* Custom scrollbar */
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+</style>

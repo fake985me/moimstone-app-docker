@@ -13,8 +13,12 @@
     <div class="relative z-10 w-full max-w-md">
       <!-- Logo & Title -->
       <div class="text-center mb-8 animate-fade-in">
-        <div class="inline-flex items-center justify-center w-20 h-20 bg-linear-to-r from-cyan-500 to-blue-600 rounded-2xl mb-4 shadow-2xl">
-          <span class="text-4xl">📦</span>
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl mb-4 shadow-2xl">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true" class="mb-3 w-16 h-16"
+            viewBox="0 0 2 2">
+            <path fill="#3636e0"
+              d="M.892 1.548H.678v-.296q0-.034-.008-.047t-.027-.013q-.036 0-.036.061v.296H.394v-.296q0-.034-.008-.047t-.027-.014q-.036 0-.036.061v.296H.11V1.21q0-.092.064-.157T.331.988q.095 0 .17.077Q.585.988.669.988q.107 0 .172.075.051.058.051.17zM1.374.8h.214v.458q0 .126-.069.205-.04.046-.1.073t-.125.027q-.128 0-.215-.083t-.088-.202q0-.116.087-.201t.206-.085l.057.003v.227q-.026-.02-.053-.02-.033 0-.057.023t-.024.056q0 .032.024.055t.059.023q.082 0 .082-.11zm.578.199v.549h-.214V.999zM1.926.786q-.032-.03-.075-.03t-.075.03-.032.07q0 .014.003.026l.006.016q.007.016.021.028.03.028.077.028c.047 0 .057-.009.077-.028q.014-.013.021-.029l.002-.005q.006-.017.006-.037 0-.04-.032-.07m.065.016Q1.973.754 1.928.729T1.834.717q-.046.011-.068.048L1.763.77l-.001.002q.02-.036.066-.045.048-.01.092.014t.064.069q.017.042.001.077.021-.04.004-.087m.043-.02Q2.011.722 1.955.692c-.056-.03-.076-.025-.116-.015q-.056.014-.083.058l-.004.006-.001.002Q1.775.7 1.832.689q.058-.012.114.018t.078.085q.021.051.002.094.025-.049.004-.106" />
+          </svg>
         </div>
         <h1 class="text-4xl font-bold text-white mb-2">Warehouse MDI</h1>
         <p class="text-gray-300">Sign in to your account</p>
@@ -106,11 +110,17 @@ const handleLogin = async () => {
   error.value = '';
 
   try {
-    await authStore.login({
+    const response = await authStore.login({
       email: email.value,
       password: password.value,
     });
-    router.push('/dashboard');
+    
+    // Check if 2FA is required
+    if (response.requires_2fa) {
+      router.push('/verify-2fa');
+    } else {
+      router.push('/dashboard');
+    }
   } catch (err) {
     error.value = err.response?.data?.message || 'Login failed. Please check your credentials.';
   } finally {

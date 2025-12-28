@@ -51,6 +51,11 @@ const routes = [
         component: () => import("../pages/auth/Login.vue"),
     },
     {
+        path: "/verify-2fa",
+        name: "TwoFactorVerify",
+        component: () => import("../pages/auth/TwoFactorVerify.vue"),
+    },
+    {
         path: "/pages/:slug",
         name: "DynamicPage",
         component: () => import("../pages/DynamicPage.vue"),

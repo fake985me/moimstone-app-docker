@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\AuthController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/verify-2fa', [AuthController::class, 'verify2fa']);
+Route::post('/resend-2fa', [AuthController::class, 'resend2fa']);
 
 // TODO: FIX AUTH - History routes temporarily public for local testing
 // Move back inside auth:sanctum middleware before production deployment
