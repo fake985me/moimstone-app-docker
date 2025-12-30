@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PublicProduct;
+use App\Models\Category;
+use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -14,15 +16,25 @@ class PublicProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PublicProduct::query();
+        $query = PublicProduct::with(['productCategories.category', 'productCategories.subCategory']);
 
-        // Filter by category
-        if ($request->filled('category')) {
+        // Filter by category (supports both legacy string and new pivot table)
+        if ($request->filled('category_id')) {
+            $query->whereHas('productCategories', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
+        } elseif ($request->filled('category')) {
+            // Legacy support for string category
             $query->where('category', $request->category);
         }
 
-        // Filter by sub_category
-        if ($request->filled('sub_category')) {
+        // Filter by sub_category (supports both legacy string and new pivot table)
+        if ($request->filled('sub_category_id')) {
+            $query->whereHas('productCategories', function ($q) use ($request) {
+                $q->where('sub_category_id', $request->sub_category_id);
+            });
+        } elseif ($request->filled('sub_category')) {
+            // Legacy support
             $query->where('sub_category', $request->sub_category);
         }
 
@@ -53,6 +65,12 @@ class PublicProductController extends Controller
         $perPage = $request->get('per_page', 15);
         $products = $query->paginate($perPage);
 
+        // Append category_pairs to each product
+        $products->getCollection()->transform(function ($product) {
+            $product->category_pairs = $product->categoryPairs;
+            return $product;
+        });
+
         return response()->json($products);
     }
 
@@ -69,6 +87,10 @@ class PublicProductController extends Controller
             'brand' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            // New categories array
+            'categories' => 'nullable|array',
+            'categories.*.category_id' => 'required_with:categories|exists:categories,id',
+            'categories.*.sub_category_id' => 'nullable|exists:sub_categories,id',
         ]);
 
         if ($validator->fails()) {
@@ -78,7 +100,17 @@ class PublicProductController extends Controller
             ], 422);
         }
 
-        $product = PublicProduct::create($request->all());
+        $data = $request->except(['categories']);
+        $product = PublicProduct::create($data);
+
+        // Sync categories if provided
+        if ($request->has('categories') && is_array($request->categories)) {
+            $product->syncCategories($request->categories);
+        }
+
+        // Load relationships for response
+        $product->load(['productCategories.category', 'productCategories.subCategory']);
+        $product->category_pairs = $product->categoryPairs;
 
         return response()->json([
             'message' => 'Product created successfully',
@@ -91,13 +123,16 @@ class PublicProductController extends Controller
      */
     public function show($id)
     {
-        $product = PublicProduct::find($id);
+        $product = PublicProduct::with(['productCategories.category', 'productCategories.subCategory'])
+            ->find($id);
 
         if (!$product) {
             return response()->json([
                 'message' => 'Product not found'
             ], 404);
         }
+
+        $product->category_pairs = $product->categoryPairs;
 
         return response()->json($product);
     }
@@ -123,6 +158,10 @@ class PublicProductController extends Controller
             'brand' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            // New categories array
+            'categories' => 'nullable|array',
+            'categories.*.category_id' => 'required_with:categories|exists:categories,id',
+            'categories.*.sub_category_id' => 'nullable|exists:sub_categories,id',
         ]);
 
         if ($validator->fails()) {
@@ -132,7 +171,17 @@ class PublicProductController extends Controller
             ], 422);
         }
 
-        $product->update($request->all());
+        $data = $request->except(['categories']);
+        $product->update($data);
+
+        // Sync categories if provided
+        if ($request->has('categories')) {
+            $product->syncCategories($request->categories ?? []);
+        }
+
+        // Load relationships for response
+        $product->load(['productCategories.category', 'productCategories.subCategory']);
+        $product->category_pairs = $product->categoryPairs;
 
         return response()->json([
             'message' => 'Product updated successfully',
@@ -161,29 +210,68 @@ class PublicProductController extends Controller
     }
 
     /**
-     * Get categories for filters
+     * Get categories for filters (now returns structured data)
      */
     public function categories()
     {
-        $categories = PublicProduct::select('category')
+        // Get categories from Category model with subcategories
+        $categoriesList = Category::with('subCategories')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($cat) {
+                return [
+                    'id' => $cat->id,
+                    'name' => $cat->name,
+                    'sub_categories' => $cat->subCategories->map(function ($sub) {
+                        return [
+                            'id' => $sub->id,
+                            'name' => $sub->name,
+                        ];
+                    }),
+                ];
+            });
+
+        // Also get legacy categories from products table
+        $legacyCategories = PublicProduct::select('category')
             ->distinct()
             ->whereNotNull('category')
             ->where('category', '!=', '')
             ->pluck('category');
 
-        return response()->json($categories);
+        return response()->json([
+            'categories' => $categoriesList,
+            'legacy_categories' => $legacyCategories,
+        ]);
     }
 
     /**
      * Get subcategories for filters
      */
-    public function subCategories()
+    public function subCategories(Request $request)
     {
-        $subCategories = PublicProduct::select('sub_category')
-            ->distinct()
-            ->whereNotNull('sub_category')
-            ->where('sub_category', '!=', '')
-            ->pluck('sub_category');
+        // If category_id is provided, filter by it
+        if ($request->filled('category_id')) {
+            $subCategories = SubCategory::where('category_id', $request->category_id)
+                ->orderBy('name')
+                ->get()
+                ->map(function ($sub) {
+                    return [
+                        'id' => $sub->id,
+                        'name' => $sub->name,
+                    ];
+                });
+        } else {
+            // Return all subcategories
+            $subCategories = SubCategory::orderBy('name')
+                ->get()
+                ->map(function ($sub) {
+                    return [
+                        'id' => $sub->id,
+                        'name' => $sub->name,
+                        'category_id' => $sub->category_id,
+                    ];
+                });
+        }
 
         return response()->json($subCategories);
     }

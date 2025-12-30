@@ -30,7 +30,7 @@
                     Upload Excel
                     <input type="file" @change="uploadExcel" accept=".xlsx,.xls,.csv" class="hidden" ref="fileInput" />
                 </label>
-                <button @click="showModal = true; editingProduct = null"
+                <button @click="showModal = true; editingProduct = null; resetForm()"
                     class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                     + Add Product
                 </button>
@@ -43,17 +43,16 @@
                 <input v-model="filters.search" @input="loadProducts" type="text"
                     placeholder="Search by title, brand..."
                     class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-                <select v-model="filters.category" @change="loadProducts"
+                <select v-model="filters.category_id" @change="loadProducts"
                     class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                     <option value="">All Categories</option>
-                    <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                 </select>
                 <select v-model="filters.brand" @change="loadProducts"
                     class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                     <option value="">All Brands</option>
                     <option v-for="brand in brands" :key="brand" :value="brand">{{ brand }}</option>
                 </select>
-                <!-- Module filter removed - not in new structure -->
                 <button @click="resetFilters" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
                     Reset
                 </button>
@@ -72,7 +71,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categories</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Stock</th>
@@ -85,9 +84,30 @@
                         <td class="px-6 py-4 text-sm">{{ product.sku }}</td>
                         <td class="px-6 py-4">
                             <div class="font-medium text-gray-900">{{ product.title }}</div>
-                            <div class="text-sm text-gray-500">{{ product.sub_category }}</div>
                         </td>
-                        <td class="px-6 py-4 text-sm">{{ product.category }}</td>
+                        <td class="px-6 py-4">
+                            <!-- Display category pairs as tags -->
+                            <div class="flex flex-wrap gap-1">
+                                <template v-if="product.category_pairs && product.category_pairs.length > 0">
+                                    <span v-for="(pair, idx) in product.category_pairs" :key="idx"
+                                        class="inline-flex items-center px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">
+                                        {{ pair.category_name }}
+                                        <span v-if="pair.sub_category_name" class="ml-1 text-indigo-600">
+                                            / {{ pair.sub_category_name }}
+                                        </span>
+                                    </span>
+                                </template>
+                                <template v-else-if="product.category">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                                        {{ product.category }}
+                                        <span v-if="product.sub_category" class="ml-1 text-gray-600">
+                                            / {{ product.sub_category }}
+                                        </span>
+                                    </span>
+                                </template>
+                                <span v-else class="text-gray-400 text-sm">-</span>
+                            </div>
+                        </td>
                         <td class="px-6 py-4 text-sm">{{ product.brand || '-' }}</td>
                         <td class="px-6 py-4">
                             <span :class="[
@@ -122,7 +142,7 @@
             </div>
         </div>
 
-        <!-- Comprehensive Product Form Modal -->
+        <!-- Product Form Modal -->
         <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
             @click.self="showModal = false">
             <div class="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -145,23 +165,8 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-1">Subtitle</label>
-                                <input v-model="form.subtitle" type="text"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-                            <div>
                                 <label class="block text-sm font-medium mb-1">SKU</label>
                                 <input v-model="form.sku" type="text"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Category</label>
-                                <input v-model="form.category" type="text"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Sub Category</label>
-                                <input v-model="form.sub_category" type="text"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
                             </div>
                             <div>
@@ -183,6 +188,55 @@
                         </div>
                     </div>
 
+                    <!-- Categories Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg font-semibold text-gray-700">Categories & Subcategories</h4>
+                            <button type="button" @click="addCategoryPair"
+                                class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">
+                                + Add Category
+                            </button>
+                        </div>
+                        
+                        <div v-if="form.categories.length === 0" class="text-gray-500 text-sm mb-4">
+                            No categories added. Click "Add Category" to add one.
+                        </div>
+
+                        <div class="space-y-3">
+                            <div v-for="(catPair, index) in form.categories" :key="index" 
+                                class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+                                    <select v-model="catPair.category_id" @change="onCategoryChange(index)"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">Select Category</option>
+                                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                                            {{ cat.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">Subcategory</label>
+                                    <select v-model="catPair.sub_category_id"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        :disabled="!catPair.category_id">
+                                        <option value="">Select Subcategory</option>
+                                        <option v-for="sub in getSubcategoriesForCategory(catPair.category_id)" 
+                                            :key="sub.id" :value="sub.id">
+                                            {{ sub.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <button type="button" @click="removeCategoryPair(index)"
+                                    class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Stock Management -->
                     <div class="bg-gray-50 p-4 rounded-lg">
                         <h4 class="text-lg font-semibold mb-4 text-gray-700">Stock Management</h4>
@@ -200,8 +254,6 @@
                         </div>
                     </div>
 
-                    <!-- Specifications and Features removed - not in new structure -->
-
                     <!-- Form Actions -->
                     <div class="flex justify-end space-x-3 pt-4 border-t">
                         <button type="button" @click="showModal = false; editingProduct = null"
@@ -214,8 +266,6 @@
                 </form>
             </div>
         </div>
-
-        <!-- Modals removed - features/specs not needed in simplified structure -->
 
         <!-- Upload Progress/Error Message -->
         <div v-if="uploadMessage" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md">
@@ -269,27 +319,61 @@ const brands = ref([]);
 
 const filters = ref({
     search: '',
-    category: '',
+    category_id: '',
     brand: ''
 });
 
 const form = ref({
     title: '',
     sku: '',
-    category: '',
-    sub_category: '',
     brand: '',
     image: '',
     descriptions: '',
     stock: 0,
-    minimum_stock: 0
+    minimum_stock: 0,
+    categories: [] // Array of {category_id, sub_category_id}
 });
+
+const resetForm = () => {
+    form.value = {
+        title: '',
+        sku: '',
+        brand: '',
+        image: '',
+        descriptions: '',
+        stock: 0,
+        minimum_stock: 0,
+        categories: []
+    };
+};
+
+const addCategoryPair = () => {
+    form.value.categories.push({
+        category_id: '',
+        sub_category_id: ''
+    });
+};
+
+const removeCategoryPair = (index) => {
+    form.value.categories.splice(index, 1);
+};
+
+const onCategoryChange = (index) => {
+    // Reset subcategory when category changes
+    form.value.categories[index].sub_category_id = '';
+};
+
+const getSubcategoriesForCategory = (categoryId) => {
+    if (!categoryId) return [];
+    const category = categories.value.find(c => c.id === categoryId);
+    return category?.sub_categories || [];
+};
 
 const loadFilterOptions = async () => {
     try {
         const response = await api.get('/products/filter-options');
-        categories.value = response.data.categories;
-        brands.value = response.data.brands;
+        categories.value = response.data.categories || [];
+        brands.value = response.data.brands || [];
     } catch (error) {
         console.error('Failed to load filter options:', error);
     }
@@ -299,6 +383,10 @@ const loadProducts = async (page = 1) => {
     loading.value = true;
     try {
         const params = { page, ...filters.value };
+        // Clean up empty params
+        Object.keys(params).forEach(key => {
+            if (params[key] === '') delete params[key];
+        });
         const response = await api.get('/products', { params });
         products.value = response.data;
     } catch (error) {
@@ -309,22 +397,29 @@ const loadProducts = async (page = 1) => {
 };
 
 const resetFilters = () => {
-    filters.value = { search: '', category: '', brand: '' };
+    filters.value = { search: '', category_id: '', brand: '' };
     loadProducts();
 };
 
 const editProduct = (product) => {
     editingProduct.value = product;
+    
+    // Convert category_pairs to form.categories format
+    const categoryPairs = product.category_pairs || [];
+    const formCategories = categoryPairs.map(pair => ({
+        category_id: pair.category_id || '',
+        sub_category_id: pair.sub_category_id || ''
+    }));
+
     form.value = {
         title: product.title || '',
         sku: product.sku || '',
-        category: product.category || '',
-        sub_category: product.sub_category || '',
         brand: product.brand || '',
         image: product.image || '',
         descriptions: product.descriptions || '',
         stock: product.stock || 0,
-        minimum_stock: product.minimum_stock || 0
+        minimum_stock: product.minimum_stock || 0,
+        categories: formCategories.length > 0 ? formCategories : []
     };
     showModal.value = true;
 };
@@ -332,18 +427,21 @@ const editProduct = (product) => {
 const saveProduct = async () => {
     saving.value = true;
     try {
+        // Filter out empty category pairs
+        const validCategories = form.value.categories.filter(c => c.category_id);
+        const payload = {
+            ...form.value,
+            categories: validCategories
+        };
+
         if (editingProduct.value) {
-            await api.put(`/products/${editingProduct.value.id}`, form.value);
+            await api.put(`/products/${editingProduct.value.id}`, payload);
         } else {
-            await api.post('/products', form.value);
+            await api.post('/products', payload);
         }
         showModal.value = false;
         editingProduct.value = null;
-        // Reset form
-        form.value = {
-            title: '', sku: '', category: '', sub_category: '', brand: '',
-            image: '', descriptions: '', stock: 0, minimum_stock: 0
-        };
+        resetForm();
         loadProducts();
     } catch (error) {
         console.error('Failed to save product:', error);
@@ -445,8 +543,6 @@ const uploadExcel = async (event) => {
         }, 8000);
     }
 };
-
-// Modal functions removed - not needed in simplified structure
 
 onMounted(() => {
     loadFilterOptions();

@@ -58,6 +58,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Categories
     Route::apiResource('categories', App\Http\Controllers\Api\CategoryController::class);
 
+    // Subcategories
+    Route::apiResource('subcategories', App\Http\Controllers\Api\SubCategoryController::class);
+
     // Products
     Route::get('/products/filter-options', [App\Http\Controllers\Api\ProductController::class, 'filterOptions']);
     Route::apiResource('products', App\Http\Controllers\Api\ProductController::class);

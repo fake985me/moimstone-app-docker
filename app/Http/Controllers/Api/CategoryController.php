@@ -11,7 +11,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Category::query();
+        $query = Category::with('subCategories');
 
         // Search
         if ($request->has('search')) {
@@ -19,12 +19,19 @@ class CategoryController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        $categories = $query->get();
+        $categories = $query->orderBy('name')->get();
 
         // Add product count for each category
         $categories->each(function ($category) {
             $category->products_count = DB::table('products')
                 ->where('category', $category->name)
+                ->count();
+            // Also count via pivot table
+            $category->pivot_products_count = DB::table('product_category')
+                ->where('category_id', $category->id)
+                ->count();
+            $category->public_products_count = DB::table('public_product_category')
+                ->where('category_id', $category->id)
                 ->count();
         });
 

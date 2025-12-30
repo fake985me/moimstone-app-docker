@@ -97,4 +97,58 @@ class Product extends Model
     {
         return $query->where('is_asset', false);
     }
+
+    /**
+     * Get all category-subcategory pairs for this product
+     */
+    public function productCategories()
+    {
+        return $this->hasMany(ProductCategory::class);
+    }
+
+    /**
+     * Get all categories for this product (many-to-many)
+     */
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'product_category')
+            ->withPivot('sub_category_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Sync categories with subcategories
+     * @param array $categoryData Array of ['category_id' => x, 'sub_category_id' => y]
+     */
+    public function syncCategories(array $categoryData)
+    {
+        // Delete existing
+        $this->productCategories()->delete();
+
+        // Insert new
+        foreach ($categoryData as $item) {
+            if (!empty($item['category_id'])) {
+                $this->productCategories()->create([
+                    'category_id' => $item['category_id'],
+                    'sub_category_id' => $item['sub_category_id'] ?? null,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Get formatted category-subcategory pairs
+     */
+    public function getCategoryPairsAttribute()
+    {
+        return $this->productCategories->map(function ($pc) {
+            return [
+                'category_id' => $pc->category_id,
+                'category_name' => $pc->category?->name,
+                'sub_category_id' => $pc->sub_category_id,
+                'sub_category_name' => $pc->subCategory?->name,
+            ];
+        });
+    }
 }
+

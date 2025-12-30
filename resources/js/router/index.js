@@ -49,11 +49,13 @@ const routes = [
         path: "/login",
         name: "Login",
         component: () => import("../pages/auth/Login.vue"),
+        meta: { guest: true },
     },
     {
         path: "/verify-2fa",
         name: "TwoFactorVerify",
         component: () => import("../pages/auth/TwoFactorVerify.vue"),
+        meta: { guest: true },
     },
     {
         path: "/pages/:slug",

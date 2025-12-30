@@ -35,9 +35,9 @@
         class="search-input"
       />
       
-      <select v-model="filters.category" @change="fetchProducts" class="filter-select">
+      <select v-model="filters.category_id" @change="fetchProducts" class="filter-select">
         <option value="">All Categories</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
       </select>
 
       <select v-model="filters.brand" @change="fetchProducts" class="filter-select">
@@ -59,8 +59,7 @@
           <tr>
             <th>Image</th>
             <th>Title</th>
-            <th>Category</th>
-            <th>Sub Category</th>
+            <th>Categories</th>
             <th>Brand</th>
             <th>Status</th>
             <th>Sort Order</th>
@@ -77,8 +76,28 @@
               <div class="product-title">{{ product.title }}</div>
               <div class="product-subtitle">{{ product.subtitle }}</div>
             </td>
-            <td>{{ product.category }}</td>
-            <td>{{ product.sub_category }}</td>
+            <td>
+              <!-- Display category pairs as tags -->
+              <div class="category-tags">
+                <template v-if="product.category_pairs && product.category_pairs.length > 0">
+                  <span v-for="(pair, idx) in product.category_pairs" :key="idx" class="category-tag">
+                    {{ pair.category_name }}
+                    <span v-if="pair.sub_category_name" class="sub-category">
+                      / {{ pair.sub_category_name }}
+                    </span>
+                  </span>
+                </template>
+                <template v-else-if="product.category">
+                  <span class="category-tag legacy">
+                    {{ product.category }}
+                    <span v-if="product.sub_category" class="sub-category">
+                      / {{ product.sub_category }}
+                    </span>
+                  </span>
+                </template>
+                <span v-else class="no-category">-</span>
+              </div>
+            </td>
             <td>{{ product.brand }}</td>
             <td>
               <span :class="['status-badge', product.is_active ? 'active' : 'inactive']">
@@ -163,6 +182,47 @@
               <div class="form-group">
                 <label>Module</label>
                 <input v-model="form.module" type="text" class="form-input" />
+              </div>
+
+              <!-- Categories Section -->
+              <div class="form-section col-span-2">
+                <div class="section-header">
+                  <h3>Categories & Subcategories</h3>
+                  <button type="button" @click="addCategoryPair" class="btn btn-sm btn-primary">
+                    + Add Category
+                  </button>
+                </div>
+                
+                <div v-if="form.categories.length === 0" class="no-categories">
+                  No categories added. Click "Add Category" to add one.
+                </div>
+
+                <div class="category-pairs">
+                  <div v-for="(catPair, index) in form.categories" :key="index" class="category-pair-row">
+                    <div class="form-group">
+                      <label>Category</label>
+                      <select v-model="catPair.category_id" @change="onCategoryChange(index)" class="form-input">
+                        <option value="">Select Category</option>
+                        <option v-for="cat in categoriesList" :key="cat.id" :value="cat.id">
+                          {{ cat.name }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Subcategory</label>
+                      <select v-model="catPair.sub_category_id" class="form-input" :disabled="!catPair.category_id">
+                        <option value="">Select Subcategory</option>
+                        <option v-for="sub in getSubcategoriesForCategory(catPair.category_id)" 
+                            :key="sub.id" :value="sub.id">
+                          {{ sub.name }}
+                        </option>
+                      </select>
+                    </div>
+                    <button type="button" @click="removeCategoryPair(index)" class="btn-icon btn-danger">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div class="form-group col-span-2">
@@ -452,6 +512,7 @@ import api from '../services/api';
 
 const products = ref({ data: [], last_page: 1, current_page: 1 });
 const categories = ref([]);
+const categoriesList = ref([]);
 const brands = ref([]);
 const loading = ref(false);
 const showForm = ref(false);
@@ -460,7 +521,7 @@ const saving = ref(false);
 
 const filters = reactive({
   search: '',
-  category: '',
+  category_id: '',
   brand: '',
   is_active: ''
 });
@@ -478,6 +539,7 @@ const form = reactive({
   descriptions: '',
   is_active: true,
   sort_order: 0,
+  categories: [], // Array of {category_id, sub_category_id}
   // Wireless specs
   wirelessStandard: '',
   wirelessStream: '',
@@ -541,6 +603,29 @@ const form = reactive({
   networkDIagram: ''
 });
 
+// Category handling functions
+function addCategoryPair() {
+  form.categories.push({
+    category_id: '',
+    sub_category_id: ''
+  });
+}
+
+function removeCategoryPair(index) {
+  form.categories.splice(index, 1);
+}
+
+function onCategoryChange(index) {
+  // Reset subcategory when category changes
+  form.categories[index].sub_category_id = '';
+}
+
+function getSubcategoriesForCategory(categoryId) {
+  if (!categoryId) return [];
+  const category = categoriesList.value.find(c => c.id === categoryId);
+  return category?.sub_categories || [];
+}
+
 // Initialize specs and features
 for (let i = 1; i <= 7; i++) form[`spec${i}`] = '';
 for (let i = 1; i <= 15; i++) form[`fitur${i}`] = '';
@@ -575,7 +660,9 @@ async function fetchProducts(page = 1) {
 async function fetchCategories() {
   try {
     const response = await api.get('/public-products/filters/categories');
-    categories.value = response.data;
+    // New structure returns { categories: [...], legacy_categories: [...] }
+    categoriesList.value = response.data.categories || [];
+    categories.value = response.data.categories || [];
   } catch (error) {
     console.error('Error fetching categories:', error);
   }
@@ -602,7 +689,17 @@ function openCreateForm() {
 
 function editProduct(product) {
   isEditing.value = true;
+  
+  // Convert category_pairs to form.categories format
+  const categoryPairs = product.category_pairs || [];
+  const formCategories = categoryPairs.map(pair => ({
+    category_id: pair.category_id || '',
+    sub_category_id: pair.sub_category_id || ''
+  }));
+  
   Object.assign(form, product);
+  form.categories = formCategories.length > 0 ? formCategories : [];
+  
   showForm.value = true;
 }
 
@@ -625,6 +722,7 @@ function resetForm() {
   form.descriptions = '';
   form.is_active = true;
   form.sort_order = 0;
+  form.categories = []; // Reset categories array
   // Reset wireless specs
   form.wirelessStandard = '';
   form.wirelessStream = '';
@@ -693,11 +791,15 @@ function resetForm() {
 async function saveProduct() {
   saving.value = true;
   try {
+    // Filter out empty category pairs and prepare payload
+    const validCategories = form.categories.filter(c => c.category_id);
+    const payload = { ...form, categories: validCategories };
+    
     if (isEditing.value) {
-      await api.put(`/public-products/${form.id}`, form);
+      await api.put(`/public-products/${form.id}`, payload);
       alert('Product updated successfully');
     } else {
-      await api.post('/public-products', form);
+      await api.post('/public-products', payload);
       alert('Product created successfully');
     }
     closeForm();
@@ -1084,5 +1186,87 @@ async function handleFileImport(event) {
 .text-center {
   text-align: center;
   padding: 20px;
+}
+
+/* Category display styles */
+.category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.category-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 12px;
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.category-tag.legacy {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.category-tag .sub-category {
+  color: #6366f1;
+  margin-left: 2px;
+}
+
+.no-category {
+  color: #9ca3af;
+}
+
+/* Category pair form styles */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.section-header h3 {
+  margin: 0;
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.no-categories {
+  color: #6b7280;
+  font-size: 14px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.category-pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-pair-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.category-pair-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.category-pair-row .btn-icon {
+  margin-bottom: 4px;
 }
 </style>
