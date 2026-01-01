@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Mail\TwoFactorCodeMail;
 
 class TwoFactorCode extends Model
@@ -51,8 +52,17 @@ class TwoFactorCode extends Model
             'expires_at' => now()->addMinutes(10),
         ]);
 
-        // Send email with the code
-        Mail::to($user->email)->send(new TwoFactorCodeMail($code, $user));
+        // Send email with the code (with error handling for development environments)
+        try {
+            Mail::to($user->email)->send(new TwoFactorCodeMail($code, $user));
+        } catch (\Exception $e) {
+            // Log the error but don't fail the login process
+            Log::warning('Failed to send 2FA email: ' . $e->getMessage());
+            // In development, log the code so testing can continue
+            if (config('app.debug')) {
+                Log::info("2FA Code for {$user->email}: {$code}");
+            }
+        }
 
         return $twoFactorCode;
     }
