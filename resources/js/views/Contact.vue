@@ -4,7 +4,7 @@
       <div class="mb-4">
         <div class="mb-6 max-w-3xl text-center sm:text-center md:mx-auto md:mb-12">
           <p class="text-base font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-200">
-            Contact
+            Contact Us
           </p>
           <h2 class="font-heading mb-4 font-bold tracking-tight text-gray-900 dark:text-white text-3xl sm:text-5xl">
             Get in Touch

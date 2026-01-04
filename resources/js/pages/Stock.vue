@@ -117,7 +117,7 @@
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category / Sub Category</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Stock</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -133,8 +133,19 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ stock.product?.sku }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ stock.product?.category?.name || 'N/A' }}
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex flex-wrap gap-1">
+                <template v-if="stock.product?.category_pairs?.length > 0">
+                  <span v-for="(pair, idx) in stock.product.category_pairs" :key="idx"
+                    class="inline-flex items-center px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">
+                    {{ pair.category_name }}
+                    <span v-if="pair.sub_category_name" class="ml-1 text-indigo-600">
+                      / {{ pair.sub_category_name }}
+                    </span>
+                  </span>
+                </template>
+                <span v-else class="text-gray-400 text-sm">-</span>
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="text-lg font-bold" :class="stock.quantity <= 10 ? 'text-red-600' : 'text-green-600'">

@@ -28,7 +28,6 @@ Route::prefix('guest')->group(function () {
 
     // CMS Content - Public Access
     Route::get('/solutions', [\App\Http\Controllers\Api\SolutionController::class, 'index']);
-    Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'index']);
     Route::get('/site-settings', [\App\Http\Controllers\Api\SiteSettingController::class, 'index']);
     Route::get('/contact-info', [\App\Http\Controllers\Api\ContactInfoController::class, 'index']);
     Route::get('/carousel-slides', [\App\Http\Controllers\Api\CarouselController::class, 'index']);
@@ -118,6 +117,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/project-investments/{id}/cancel', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'cancel']);
     Route::apiResource('project-investments', App\Http\Controllers\Api\ProjectInvestmentController::class);
 
+    // Project Tasks
+    Route::prefix('project-investments/{project}')->group(function () {
+        Route::get('/tasks', [App\Http\Controllers\Api\ProjectTaskController::class, 'index']);
+        Route::post('/tasks', [App\Http\Controllers\Api\ProjectTaskController::class, 'store']);
+        Route::post('/tasks/reorder', [App\Http\Controllers\Api\ProjectTaskController::class, 'reorder']);
+    });
+    Route::put('/project-tasks/{task}', [App\Http\Controllers\Api\ProjectTaskController::class, 'update']);
+    Route::delete('/project-tasks/{task}', [App\Http\Controllers\Api\ProjectTaskController::class, 'destroy']);
+    Route::post('/project-tasks/{task}/status', [App\Http\Controllers\Api\ProjectTaskController::class, 'updateStatus']);
+
+    // Project Progress & Materials
+    Route::post('/project-investments/{id}/update-progress', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'updateProgress']);
+    Route::get('/project-investments/{id}/progress-history', [App\Http\Controllers\Api\ProjectInvestmentController::class, 'progressHistory']);
+    Route::prefix('project-investments/{project}')->group(function () {
+        Route::get('/materials', [App\Http\Controllers\Api\ProjectMaterialController::class, 'index']);
+        Route::post('/materials', [App\Http\Controllers\Api\ProjectMaterialController::class, 'store']);
+        Route::post('/materials/reorder', [App\Http\Controllers\Api\ProjectMaterialController::class, 'reorder']);
+    });
+    Route::put('/project-materials/{material}', [App\Http\Controllers\Api\ProjectMaterialController::class, 'update']);
+    Route::post('/project-materials/{material}/quantities', [App\Http\Controllers\Api\ProjectMaterialController::class, 'updateQuantities']);
+    Route::delete('/project-materials/{material}', [App\Http\Controllers\Api\ProjectMaterialController::class, 'destroy']);
+
     // MSA Projects (Maintenance Service Agreement)
     Route::post('/msa-projects/{id}/start-repair', [App\Http\Controllers\Api\MSAProjectController::class, 'startRepair']);
     Route::post('/msa-projects/{id}/mark-returned', [App\Http\Controllers\Api\MSAProjectController::class, 'markReturned']);
@@ -125,21 +146,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/msa-projects/{id}/close', [App\Http\Controllers\Api\MSAProjectController::class, 'close']);
     Route::apiResource('msa-projects', App\Http\Controllers\Api\MSAProjectController::class);
 
-    // Project Planning (comprehensive project management)
-    Route::get('/project-plans/summary', [App\Http\Controllers\Api\ProjectPlanController::class, 'summary']);
-    Route::post('/project-plans/{projectPlan}/start', [App\Http\Controllers\Api\ProjectPlanController::class, 'start']);
-    Route::post('/project-plans/{projectPlan}/complete', [App\Http\Controllers\Api\ProjectPlanController::class, 'complete']);
-    Route::post('/project-plans/{projectPlan}/cancel', [App\Http\Controllers\Api\ProjectPlanController::class, 'cancel']);
-    Route::post('/project-plans/{projectPlan}/milestones', [App\Http\Controllers\Api\ProjectPlanController::class, 'addMilestone']);
-    Route::put('/project-plans/{projectPlan}/milestones/{milestone}', [App\Http\Controllers\Api\ProjectPlanController::class, 'updateMilestone']);
-    Route::delete('/project-plans/{projectPlan}/milestones/{milestone}', [App\Http\Controllers\Api\ProjectPlanController::class, 'deleteMilestone']);
-    Route::post('/project-plans/{projectPlan}/materials', [App\Http\Controllers\Api\ProjectPlanController::class, 'addMaterial']);
-    Route::put('/project-plans/{projectPlan}/materials/{material}', [App\Http\Controllers\Api\ProjectPlanController::class, 'updateMaterial']);
-    Route::delete('/project-plans/{projectPlan}/materials/{material}', [App\Http\Controllers\Api\ProjectPlanController::class, 'deleteMaterial']);
-    Route::post('/project-plans/{projectPlan}/costs', [App\Http\Controllers\Api\ProjectPlanController::class, 'addCost']);
-    Route::put('/project-plans/{projectPlan}/costs/{cost}', [App\Http\Controllers\Api\ProjectPlanController::class, 'updateCost']);
-    Route::delete('/project-plans/{projectPlan}/costs/{cost}', [App\Http\Controllers\Api\ProjectPlanController::class, 'deleteCost']);
-    Route::apiResource('project-plans', App\Http\Controllers\Api\ProjectPlanController::class);
+    // Warehouse Management
+    Route::prefix('warehouses')->group(function () {
+        Route::get('/statistics', [App\Http\Controllers\Api\WarehouseController::class, 'statistics']);
+        Route::post('/{warehouse}/set-default', [App\Http\Controllers\Api\WarehouseController::class, 'setDefault']);
+        Route::get('/{warehouse}/locations', [App\Http\Controllers\Api\WarehouseController::class, 'locations']);
+        Route::post('/{warehouse}/locations', [App\Http\Controllers\Api\WarehouseController::class, 'storeLocation']);
+    });
+    Route::apiResource('warehouses', App\Http\Controllers\Api\WarehouseController::class);
+    Route::put('/warehouse-locations/{location}', [App\Http\Controllers\Api\WarehouseController::class, 'updateLocation']);
+    Route::delete('/warehouse-locations/{location}', [App\Http\Controllers\Api\WarehouseController::class, 'destroyLocation']);
+
+    // Stock Transfers
+    Route::prefix('stock-transfers')->group(function () {
+        Route::get('/statistics', [App\Http\Controllers\Api\StockTransferController::class, 'statistics']);
+        Route::post('/{stockTransfer}/start', [App\Http\Controllers\Api\StockTransferController::class, 'startTransfer']);
+        Route::post('/{stockTransfer}/complete', [App\Http\Controllers\Api\StockTransferController::class, 'completeTransfer']);
+        Route::post('/{stockTransfer}/cancel', [App\Http\Controllers\Api\StockTransferController::class, 'cancelTransfer']);
+    });
+    Route::apiResource('stock-transfers', App\Http\Controllers\Api\StockTransferController::class)->except(['update', 'destroy']);
 
     // Tax Rates
     Route::get('/tax-rates/active', [App\Http\Controllers\Api\TaxRateController::class, 'active']);
@@ -173,7 +198,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // CMS Content Management - Admin Only
     Route::apiResource('solutions', App\Http\Controllers\Api\SolutionController::class);
-    Route::apiResource('projects', App\Http\Controllers\Api\ProjectController::class);
     Route::apiResource('site-settings', App\Http\Controllers\Api\SiteSettingController::class);
     Route::post('/site-settings/bulk-update', [App\Http\Controllers\Api\SiteSettingController::class, 'bulkUpdate']);
     Route::apiResource('contact-info', App\Http\Controllers\Api\ContactInfoController::class);

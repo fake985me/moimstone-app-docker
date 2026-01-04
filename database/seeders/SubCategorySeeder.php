@@ -18,7 +18,6 @@ class SubCategorySeeder extends Seeder
         $switch = DB::table('categories')->where('name', 'SWITCH')->first();
         $router = DB::table('categories')->where('name', 'ROUTER')->first();
         $wireless = DB::table('categories')->where('name', 'WIRELESS')->first();
-        $cpe = DB::table('categories')->where('name', 'CPE')->first();
 
         // Check if categories exist
         if (!$xgspon || !$gpon || !$switch) {
@@ -32,8 +31,12 @@ class SubCategorySeeder extends Seeder
             ['category_id' => $xgspon->id, 'name' => 'ONU PoE', 'description' => 'Optical Network Unit with PoE'],
             ['category_id' => $gpon->id, 'name' => 'OLT', 'description' => 'Optical Line Terminal'],
             ['category_id' => $gpon->id, 'name' => 'ONT', 'description' => 'Optical Network Terminal'],
-            ['category_id' => $switch->id, 'name' => 'L2 SWITCH', 'description' => 'Layer 2 Switch'],
-            ['category_id' => $switch->id, 'name' => 'L3 SWITCH', 'description' => 'Layer 3 Switch'],
+            ['category_id' => $gpon->id, 'name' => 'ONU', 'description' => 'Optical Network Unit'],
+            ['category_id' => $gpon->id, 'name' => 'ONU PoE', 'description' => 'Optical Network Unit with PoE'],
+            ['category_id' => $switch->id, 'name' => 'Backbone Switch', 'description' => 'Backbone Switch'],
+            ['category_id' => $switch->id, 'name' => 'L2 Switch', 'description' => 'Layer 2 Switch'],
+            ['category_id' => $switch->id, 'name' => 'L2 POE Switch', 'description' => 'Layer 2 Switch with PoE'],
+            ['category_id' => $switch->id, 'name' => 'L3 Switch', 'description' => 'Layer 3 Switch'],
         ];
 
         // Add optional categories if they exist
@@ -44,9 +47,6 @@ class SubCategorySeeder extends Seeder
             $subCategories[] = ['category_id' => $wireless->id, 'name' => 'INDOOR AP', 'description' => 'Indoor Access Point'];
             $subCategories[] = ['category_id' => $wireless->id, 'name' => 'OUTDOOR AP', 'description' => 'Outdoor Access Point'];
             $subCategories[] = ['category_id' => $wireless->id, 'name' => 'CONTROLLER', 'description' => 'Wireless Controller'];
-        }
-        if ($cpe) {
-            $subCategories[] = ['category_id' => $cpe->id, 'name' => 'VOIP', 'description' => 'Voice over IP devices'];
         }
 
         foreach ($subCategories as $subCategory) {

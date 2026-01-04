@@ -29,7 +29,7 @@ const routes = [
     {
         path: "/contact",
         name: "Contact",
-        component: () => import("../pages/Contact.vue"),
+        component: () => import("../views/Contact.vue"),
         meta: { public: true },
     },
     {
@@ -129,6 +129,16 @@ const routes = [
                 component: () => import("../pages/Assets.vue"),
             },
             {
+                path: "warehouses",
+                name: "Warehouses",
+                component: () => import("../pages/Warehouses.vue"),
+            },
+            {
+                path: "stock-transfers",
+                name: "StockTransfers",
+                component: () => import("../pages/StockTransfers.vue"),
+            },
+            {
                 path: "deliveries",
                 name: "Deliveries",
                 component: () => import("../pages/Deliveries.vue"),
@@ -142,12 +152,6 @@ const routes = [
                 path: "sales-people",
                 name: "SalesPeople",
                 component: () => import("../pages/SalesPeople.vue"),
-            },
-            // Project Planning & Accounting
-            {
-                path: "project-planning",
-                name: "ProjectPlanning",
-                component: () => import("../pages/ProjectPlanning.vue"),
             },
             {
                 path: "accounting",

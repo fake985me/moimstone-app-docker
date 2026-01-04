@@ -10,64 +10,77 @@ class ProjectMaterial extends Model
     use HasFactory;
 
     protected $fillable = [
-        'project_plan_id',
-        'product_id',
-        'material_name',
+        'project_investment_id',
+        'name',
+        'unit',
+        'specification',
         'quantity_planned',
-        'quantity_used',
+        'quantity_ordered',
+        'quantity_received',
+        'quantity_installed',
         'unit_price',
-        'total_cost',
+        'total_price',
+        'status',
+        'expected_delivery_date',
+        'actual_delivery_date',
         'notes',
+        'sort_order',
     ];
 
     protected $casts = [
         'quantity_planned' => 'integer',
-        'quantity_used' => 'integer',
+        'quantity_ordered' => 'integer',
+        'quantity_received' => 'integer',
+        'quantity_installed' => 'integer',
         'unit_price' => 'decimal:2',
-        'total_cost' => 'decimal:2',
+        'total_price' => 'decimal:2',
+        'expected_delivery_date' => 'date',
+        'actual_delivery_date' => 'date',
+        'sort_order' => 'integer',
     ];
 
-    protected $appends = ['usage_percentage', 'remaining_quantity', 'estimated_cost'];
+    const STATUS_PENDING = 'pending';
+    const STATUS_ORDERED = 'ordered';
+    const STATUS_PARTIAL = 'partial';
+    const STATUS_RECEIVED = 'received';
+    const STATUS_INSTALLED = 'installed';
 
-    public function projectPlan()
+    public function project()
     {
-        return $this->belongsTo(ProjectPlan::class);
+        return $this->belongsTo(ProjectInvestment::class, 'project_investment_id');
     }
 
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function getUsagePercentageAttribute()
+    public function getDeliveryProgressAttribute()
     {
         if ($this->quantity_planned <= 0) return 0;
-        return round(($this->quantity_used / $this->quantity_planned) * 100, 2);
+        return round(($this->quantity_received / $this->quantity_planned) * 100);
     }
 
-    public function getRemainingQuantityAttribute()
+    public function getInstallationProgressAttribute()
     {
-        return max(0, $this->quantity_planned - $this->quantity_used);
+        if ($this->quantity_planned <= 0) return 0;
+        return round(($this->quantity_installed / $this->quantity_planned) * 100);
     }
 
-    public function getEstimatedCostAttribute()
+    public function updateStatus()
     {
-        return $this->quantity_planned * $this->unit_price;
-    }
-
-    public function updateUsage($quantity)
-    {
-        $this->quantity_used = $quantity;
-        $this->total_cost = $quantity * $this->unit_price;
+        if ($this->quantity_installed >= $this->quantity_planned) {
+            $this->status = self::STATUS_INSTALLED;
+        } elseif ($this->quantity_received >= $this->quantity_planned) {
+            $this->status = self::STATUS_RECEIVED;
+        } elseif ($this->quantity_received > 0) {
+            $this->status = self::STATUS_PARTIAL;
+        } elseif ($this->quantity_ordered > 0) {
+            $this->status = self::STATUS_ORDERED;
+        } else {
+            $this->status = self::STATUS_PENDING;
+        }
         $this->save();
-        
-        // Recalculate project costs
-        $this->projectPlan->recalculateCosts();
     }
 
-    // Get material name (product title or custom name)
-    public function getMaterialDisplayName()
+    public function calculateTotalPrice()
     {
-        return $this->product ? $this->product->title : $this->material_name;
+        $this->total_price = $this->quantity_planned * $this->unit_price;
+        $this->save();
     }
 }

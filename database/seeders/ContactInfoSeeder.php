@@ -24,7 +24,7 @@ class ContactInfoSeeder extends Seeder
             [
                 'type' => 'address',
                 'label' => 'Our Address',
-                'value' => "Gedung Tifa Arum Realty\n3th Floor Suite 301\nJl. K.H Wahid Hasyim No. 103\nKebon Sirih, Jakarta Pusat 10350",
+                'value' => "Gedung Tifa Arum Realty\n3th Floor Suite 301\nJl. Kuningan Barat. 1 No. 26\nKuningan Barat, Kec. Mampang Prapatan\nJakarta Selatan 12710",
                 'icon' => 'map-marker',
                 'order' => 2,
                 'is_active' => true,

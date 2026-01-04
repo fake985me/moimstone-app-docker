@@ -13,7 +13,10 @@ class StockController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = CurrentStock::with('product')
+            $query = CurrentStock::with([
+                    'product.productCategories.category',
+                    'product.productCategories.subCategory'
+                ])
                 // Exclude asset products from stock management
                 ->whereHas('product', function ($q) {
                     $q->where('is_asset', false)->orWhereNull('is_asset');
@@ -34,6 +37,14 @@ class StockController extends Controller
             }
 
             $stocks = $query->paginate($request->per_page ?? 15);
+
+            // Append category_pairs to each product (matching ProductController pattern)
+            $stocks->getCollection()->transform(function ($stock) {
+                if ($stock->product) {
+                    $stock->product->category_pairs = $stock->product->categoryPairs;
+                }
+                return $stock;
+            });
 
             return response()->json($stocks);
         } catch (\Exception $e) {

@@ -11,6 +11,8 @@ class CurrentStock extends Model
 
     protected $fillable = [
         'product_id',
+        'warehouse_id',
+        'location_id',
         'quantity',
         'last_updated'
     ];
@@ -26,5 +28,21 @@ class CurrentStock extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the warehouse
+     */
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    /**
+     * Get the location
+     */
+    public function location()
+    {
+        return $this->belongsTo(WarehouseLocation::class, 'location_id');
     }
 }

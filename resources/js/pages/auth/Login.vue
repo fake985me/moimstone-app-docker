@@ -20,15 +20,15 @@
               d="M.892 1.548H.678v-.296q0-.034-.008-.047t-.027-.013q-.036 0-.036.061v.296H.394v-.296q0-.034-.008-.047t-.027-.014q-.036 0-.036.061v.296H.11V1.21q0-.092.064-.157T.331.988q.095 0 .17.077Q.585.988.669.988q.107 0 .172.075.051.058.051.17zM1.374.8h.214v.458q0 .126-.069.205-.04.046-.1.073t-.125.027q-.128 0-.215-.083t-.088-.202q0-.116.087-.201t.206-.085l.057.003v.227q-.026-.02-.053-.02-.033 0-.057.023t-.024.056q0 .032.024.055t.059.023q.082 0 .082-.11zm.578.199v.549h-.214V.999zM1.926.786q-.032-.03-.075-.03t-.075.03-.032.07q0 .014.003.026l.006.016q.007.016.021.028.03.028.077.028c.047 0 .057-.009.077-.028q.014-.013.021-.029l.002-.005q.006-.017.006-.037 0-.04-.032-.07m.065.016Q1.973.754 1.928.729T1.834.717q-.046.011-.068.048L1.763.77l-.001.002q.02-.036.066-.045.048-.01.092.014t.064.069q.017.042.001.077.021-.04.004-.087m.043-.02Q2.011.722 1.955.692c-.056-.03-.076-.025-.116-.015q-.056.014-.083.058l-.004.006-.001.002Q1.775.7 1.832.689q.058-.012.114.018t.078.085q.021.051.002.094.025-.049.004-.106" />
           </svg>
         </div>
-        <h1 class="text-4xl font-bold text-white mb-2">Warehouse MDI</h1>
-        <p class="text-gray-300">Sign in to your account</p>
+        <h1 class="text-4xl font-bold text-white mb-2">{{ $t('login.title') }}</h1>
+        <p class="text-gray-300">{{ $t('login.subtitle') }}</p>
       </div>
 
       <!-- Login Form -->
       <div class="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/20">
         <form @submit.prevent="handleLogin" class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-white mb-2">Email Address</label>
+            <label class="block text-sm font-medium text-white mb-2">{{ $t('login.emailLabel') }}</label>
             <input
               v-model="email"
               type="email"
@@ -39,7 +39,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-white mb-2">Password</label>
+            <label class="block text-sm font-medium text-white mb-2">{{ $t('login.passwordLabel') }}</label>
             <input
               v-model="password"
               type="password"
@@ -58,24 +58,24 @@
             :disabled="loading"
             class="w-full py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-cyan-500/50 disabled:opacity-50"
           >
-            {{ loading ? 'Signing in...' : 'Sign In' }}
+            {{ loading ? $t('login.signingIn') : $t('login.signIn') }}
           </button>
         </form>
 
         <!-- Demo Accounts -->
         <div class="mt-8 pt-6 border-t border-white/20">
-          <p class="text-sm text-gray-300 mb-3 font-medium">Demo Accounts:</p>
+          <p class="text-sm text-gray-300 mb-3 font-medium">{{ $t('login.demoAccounts') }}</p>
           <div class="space-y-2 text-sm">
             <div class="bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
-              <p class="text-white font-medium">Super Admin</p>
-              <p class="text-gray-300 text-xs">admin@warehouse.com / password</p>
+              <p class="text-white font-medium">{{ $t('login.superAdmin') }}</p>
+              <p class="text-gray-300 text-xs">testmoimstone@gmail.com / password</p>
             </div>
             <div class="bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
-              <p class="text-white font-medium">Admin User</p>
+              <p class="text-white font-medium">{{ $t('login.adminUser') }}</p>
               <p class="text-gray-300 text-xs">admin@example.com / password</p>
             </div>
             <div class="bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
-              <p class="text-white font-medium">Sales User</p>
+              <p class="text-white font-medium">{{ $t('login.salesUser') }}</p>
               <p class="text-gray-300 text-xs">sales@example.com / password</p>
             </div>
           </div>
@@ -85,7 +85,7 @@
       <!-- Back to Home -->
       <div class="text-center mt-6">
         <router-link to="/" class="text-gray-300 hover:text-white transition-colors">
-          ← Back to Home
+          {{ $t('common.backToHome') }}
         </router-link>
       </div>
     </div>

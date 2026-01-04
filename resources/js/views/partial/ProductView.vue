@@ -178,7 +178,7 @@
                 class="w-full h-48 flex object-contain justify-center items-center mx-auto p-4"
               >
                 <div
-                  class="w-[42] h-[80%] bg-primary-200 rounded-full flex items-center justify-center"
+                  class="w-[62] h-[80%] bg-primary-200 rounded-full flex items-center justify-center"
                 >
                   <img
                     :src="pagedMobile[mobileIndex].image"

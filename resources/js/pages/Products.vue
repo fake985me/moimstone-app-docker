@@ -180,11 +180,6 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                     placeholder="https://..." />
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium mb-1">Description</label>
-                                <textarea v-model="form.descriptions" rows="4"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
-                            </div>
                         </div>
                     </div>
 
@@ -328,7 +323,6 @@ const form = ref({
     sku: '',
     brand: '',
     image: '',
-    descriptions: '',
     stock: 0,
     minimum_stock: 0,
     categories: [] // Array of {category_id, sub_category_id}
@@ -340,7 +334,6 @@ const resetForm = () => {
         sku: '',
         brand: '',
         image: '',
-        descriptions: '',
         stock: 0,
         minimum_stock: 0,
         categories: []
@@ -416,7 +409,6 @@ const editProduct = (product) => {
         sku: product.sku || '',
         brand: product.brand || '',
         image: product.image || '',
-        descriptions: product.descriptions || '',
         stock: product.stock || 0,
         minimum_stock: product.minimum_stock || 0,
         categories: formCategories.length > 0 ? formCategories : []

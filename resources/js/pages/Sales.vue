@@ -45,6 +45,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery</th>
@@ -59,6 +60,13 @@
               <div class="text-sm text-gray-500">{{ sale.customer_phone }}</div>
             </td>
             <td class="px-6 py-4 text-sm text-gray-500">{{ new Date(sale.sale_date).toLocaleDateString() }}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">
+              <ul class="list-disc list-inside">
+                <li v-for="item in sale.items" :key="item.id">
+                  {{ item.product?.title }} (x{{ item.quantity }})
+                </li>
+              </ul>
+            </td>
             <td class="px-6 py-4 text-sm font-bold text-gray-900">Rp {{ formatPrice(sale.total_amount) }}</td>
             <td class="px-6 py-4">
               <span :class="getStatusBadgeClass(sale.status)">

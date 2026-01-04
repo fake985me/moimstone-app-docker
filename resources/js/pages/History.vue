@@ -148,7 +148,7 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
                   <div>
                     <p class="text-gray-500">Tanggal</p>
-                    <p class="font-medium">{{ formatDate(sale.date) }}</p>
+                    <p class="font-medium">{{ formatDate(sale.sale_date) }}</p>
                   </div>
                   <div>
                     <p class="text-gray-500">Total</p>
@@ -156,7 +156,15 @@
                   </div>
                   <div>
                     <p class="text-gray-500">Items</p>
-                    <p class="font-medium">{{ sale.items_count }} produk</p>
+                    <div class="text-sm">
+                      <template v-if="sale.items && sale.items.length > 0">
+                        <p v-for="(item, idx) in sale.items.slice(0, 3)" :key="idx" class="font-medium">
+                          {{ item.product?.title || item.product_name || 'Produk' }} x {{ item.quantity }}
+                        </p>
+                        <p v-if="sale.items.length > 3" class="text-gray-400">+{{ sale.items.length - 3 }} lainnya</p>
+                      </template>
+                      <p v-else class="font-medium">{{ sale.items_count || 0 }} produk</p>
+                    </div>
                   </div>
                   <div>
                     <p class="text-gray-500">Status</p>
@@ -199,7 +207,7 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
                   <div>
                     <p class="text-gray-500">Tanggal</p>
-                    <p class="font-medium">{{ formatDate(purchase.purchase_date) }}</p>
+                    <p class="font-medium">{{ formatDate(purchase.order_date) }}</p>
                   </div>
                   <div>
                     <p class="text-gray-500">Total</p>
@@ -207,7 +215,15 @@
                   </div>
                   <div>
                     <p class="text-gray-500">Items</p>
-                    <p class="font-medium">{{ purchase.items?.length || 0 }} produk</p>
+                    <div class="text-sm">
+                      <template v-if="purchase.items && purchase.items.length > 0">
+                        <p v-for="(item, idx) in purchase.items.slice(0, 3)" :key="idx" class="font-medium">
+                          {{ item.product?.title || item.product_name || 'Produk' }} x {{ item.quantity }}
+                        </p>
+                        <p v-if="purchase.items.length > 3" class="text-gray-400">+{{ purchase.items.length - 3 }} lainnya</p>
+                      </template>
+                      <p v-else class="font-medium">{{ purchase.items_count || 0 }} produk</p>
+                    </div>
                   </div>
                   <div>
                     <p class="text-gray-500">Status</p>

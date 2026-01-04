@@ -4,7 +4,7 @@
     <div class="flex justify-between items-end">
       <div>
         <p class="text-gray-500 text-sm">{{ currentDate }}</p>
-        <h1 class="text-3xl font-light text-gray-800">Welcome back 👋</h1>
+        <h1 class="text-3xl font-light text-gray-800">{{ $t('dashboard.welcomeBack') }}</h1>
       </div>
     </div>
 
@@ -13,7 +13,7 @@
       <div class="group bg-white rounded-2xl p-5 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
           <span class="text-2xl">📦</span>
-          <span class="text-xs text-gray-400 group-hover:text-blue-500 transition-colors">Products</span>
+          <span class="text-xs text-gray-400 group-hover:text-blue-500 transition-colors">{{ $t('dashboard.totalProducts') }}</span>
         </div>
         <p class="text-2xl font-semibold text-gray-800">{{ stats.totalProducts || 0 }}</p>
       </div>
@@ -21,7 +21,7 @@
       <div class="group bg-white rounded-2xl p-5 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
           <span class="text-2xl">💰</span>
-          <span class="text-xs text-gray-400 group-hover:text-green-500 transition-colors">Sales</span>
+          <span class="text-xs text-gray-400 group-hover:text-green-500 transition-colors">{{ $t('dashboard.totalSales') }}</span>
         </div>
         <p class="text-2xl font-semibold text-gray-800">{{ stats.totalSales || 0 }}</p>
       </div>
@@ -29,7 +29,7 @@
       <div class="group bg-white rounded-2xl p-5 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
           <span class="text-2xl">🛒</span>
-          <span class="text-xs text-gray-400 group-hover:text-purple-500 transition-colors">Purchases</span>
+          <span class="text-xs text-gray-400 group-hover:text-purple-500 transition-colors">{{ $t('dashboard.totalPurchases') }}</span>
         </div>
         <p class="text-2xl font-semibold text-gray-800">{{ stats.totalPurchases || 0 }}</p>
       </div>
@@ -45,7 +45,7 @@
       <div class="group bg-white rounded-2xl p-5 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
           <span class="text-2xl">⚠️</span>
-          <span class="text-xs text-gray-400 group-hover:text-red-500 transition-colors">Low Stock</span>
+          <span class="text-xs text-gray-400 group-hover:text-red-500 transition-colors">{{ $t('dashboard.lowStock') }}</span>
         </div>
         <p class="text-2xl font-semibold text-gray-800">{{ stats.lowStockItems || 0 }}</p>
       </div>
@@ -71,20 +71,20 @@
         <VueApexCharts v-if="stockChartOptions && stockChartSeries.length" type="bar" height="280"
           :options="stockChartOptions" :series="stockChartSeries" />
         <div v-else class="h-64 flex items-center justify-center text-gray-400">
-          <p>No data available</p>
+          <p>{{ $t('common.noData') }}</p>
         </div>
       </div>
 
       <!-- Stock Status Cards -->
       <div class="bg-white rounded-2xl p-6 border border-gray-100">
-        <h2 class="text-lg font-medium text-gray-800 mb-6">Stock Status</h2>
+        <h2 class="text-lg font-medium text-gray-800 mb-6">{{ $t('dashboard.stockStatus') }}</h2>
         <div class="space-y-4">
           <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <span class="text-green-600 text-lg">✓</span>
               </div>
-              <span class="text-gray-700">Ready</span>
+              <span class="text-gray-700">{{ $t('dashboard.inStock') }}</span>
             </div>
             <span class="text-xl font-semibold text-gray-800">{{ stockStatus.ready }}</span>
           </div>
@@ -94,7 +94,7 @@
               <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
                 <span class="text-yellow-600 text-lg">↻</span>
               </div>
-              <span class="text-gray-700">Restock</span>
+              <span class="text-gray-700">{{ $t('dashboard.restock') }}</span>
             </div>
             <span class="text-xl font-semibold text-gray-800">{{ stockStatus.restock }}</span>
           </div>
@@ -114,7 +114,7 @@
               <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                 <span class="text-red-600 text-lg">×</span>
               </div>
-              <span class="text-gray-700">Out of Stock</span>
+              <span class="text-gray-700">{{ $t('dashboard.outOfStock') }}</span>
             </div>
             <span class="text-xl font-semibold text-gray-800">{{ stockStatus.out }}</span>
           </div>
@@ -126,18 +126,20 @@
     <div class="bg-white rounded-2xl p-6 border border-gray-100">
       <div class="flex justify-between items-center mb-6">
         <div>
-          <h2 class="text-lg font-medium text-gray-800">Stock Report</h2>
-          <p class="text-sm text-gray-400">Top products by quantity</p>
+          <h2 class="text-lg font-medium text-gray-800">{{ $t('dashboard.stockReport') }}</h2>
+          <p class="text-sm text-gray-400">{{ $t('dashboard.topProducts') }}</p>
         </div>
       </div>
       <div class="overflow-hidden">
         <table class="w-full">
           <thead>
             <tr class="text-left text-xs text-gray-400 uppercase tracking-wider">
-              <th class="pb-4 font-medium">SKU</th>
-              <th class="pb-4 font-medium">Product</th>
-              <th class="pb-4 font-medium text-right">Quantity</th>
-              <th class="pb-4 font-medium text-right">Updated</th>
+              <th class="pb-4 font-medium">{{ $t('dashboard.sku') }}</th>
+              <th class="pb-4 font-medium">{{ $t('dashboard.productName') }}</th>
+              <th class="pb-4 font-medium">{{ $t('dashboard.category') }}</th>
+              <th class="pb-4 font-medium">{{ $t('dashboard.subcategory') }}</th>
+              <th class="pb-4 font-medium text-right">{{ $t('dashboard.quantity') }}</th>
+              <th class="pb-4 font-medium text-right">{{ $t('dashboard.updated') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-50">
@@ -146,6 +148,18 @@
                 <span class="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded">{{ item.code }}</span>
               </td>
               <td class="py-4 text-sm text-gray-700">{{ item.unit }}</td>
+              <td class="py-4 text-sm text-gray-600">
+                <div v-if="item.categories && item.categories.length" class="flex flex-wrap gap-1">
+                  <span v-for="(cat, i) in item.categories" :key="i" class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">{{ cat }}</span>
+                </div>
+                <span v-else class="text-gray-400">-</span>
+              </td>
+              <td class="py-4 text-sm text-gray-600">
+                <div v-if="item.subcategories && item.subcategories.length" class="flex flex-wrap gap-1">
+                  <span v-for="(sub, i) in item.subcategories" :key="i" class="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs">{{ sub }}</span>
+                </div>
+                <span v-else class="text-gray-400">-</span>
+              </td>
               <td class="py-4 text-right">
                 <span class="text-sm font-semibold text-gray-800">{{ item.value }}</span>
               </td>
@@ -154,7 +168,7 @@
           </tbody>
         </table>
         <div v-if="!stockReports.length" class="py-8 text-center text-gray-400">
-          No stock data available
+          {{ $t('dashboard.noStockData') }}
         </div>
       </div>
     </div>
@@ -306,12 +320,18 @@ const loadStockReports = async () => {
     stockReports.value = stocks
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5)
-      .map(stock => ({
-        code: stock.product?.sku || 'N/A',
-        value: stock.quantity,
-        unit: stock.product?.title || stock.product?.name || 'Unknown',
-        date: new Date(stock.last_updated).toLocaleDateString('id-ID')
-      }));
+      .map(stock => {
+        // Get all category pairs
+        const categoryPairs = stock.product?.category_pairs || [];
+        return {
+          code: stock.product?.sku || 'N/A',
+          value: stock.quantity,
+          unit: stock.product?.title || stock.product?.name || 'Unknown',
+          categories: categoryPairs.map(p => p.category_name).filter(Boolean),
+          subcategories: categoryPairs.map(p => p.sub_category_name).filter(Boolean),
+          date: new Date(stock.last_updated).toLocaleDateString('id-ID')
+        };
+      });
   } catch (error) {
     console.error('Failed to load stock reports:', error);
   }

@@ -47,9 +47,17 @@ class ProjectInvestmentController extends Controller
             'project_name' => 'required|string|max:255',
             'client_name' => 'required|string|max:255',
             'client_contact' => 'nullable|string',
+            'project_location' => 'nullable|string|max:500',
+            'pic_name' => 'nullable|string|max:255',
+            'pic_phone' => 'nullable|string|max:50',
             'description' => 'nullable|string',
+            'scope_of_work' => 'nullable|string',
             'start_date' => 'required|date',
             'expected_end_date' => 'nullable|date|after_or_equal:start_date',
+            'duration_days' => 'nullable|integer|min:1',
+            'po_number' => 'nullable|string|max:100',
+            'po_value' => 'nullable|numeric|min:0',
+            'po_date' => 'nullable|date',
             'items' => 'array',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -62,13 +70,23 @@ class ProjectInvestmentController extends Controller
 
             $project = ProjectInvestment::create([
                 'project_code' => $projectCode,
+                'po_number' => $validated['po_number'] ?? null,
+                'po_value' => $validated['po_value'] ?? 0,
+                'po_date' => $validated['po_date'] ?? null,
                 'project_name' => $validated['project_name'],
                 'client_name' => $validated['client_name'],
                 'client_contact' => $validated['client_contact'] ?? null,
+                'project_location' => $validated['project_location'] ?? null,
+                'pic_name' => $validated['pic_name'] ?? null,
+                'pic_phone' => $validated['pic_phone'] ?? null,
                 'description' => $validated['description'] ?? null,
+                'scope_of_work' => $validated['scope_of_work'] ?? null,
                 'start_date' => $validated['start_date'],
                 'expected_end_date' => $validated['expected_end_date'] ?? null,
+                'duration_days' => $validated['duration_days'] ?? null,
                 'status' => 'pending',
+                'delivery_progress' => 0,
+                'installation_progress' => 0,
                 'user_id' => auth()->id(),
             ]);
 
@@ -95,9 +113,17 @@ class ProjectInvestmentController extends Controller
         }
     }
 
+
     public function show($id)
     {
-        $project = ProjectInvestment::with(['items.product', 'user', 'approver'])->findOrFail($id);
+        $project = ProjectInvestment::with([
+            'items.product', 
+            'materials', 
+            'tasks.assignee', 
+            'progressLogs.updatedBy', 
+            'user', 
+            'approver'
+        ])->findOrFail($id);
         return response()->json($project);
     }
 
@@ -108,12 +134,55 @@ class ProjectInvestmentController extends Controller
         $validated = $request->validate([
             'project_name' => 'sometimes|string|max:255',
             'client_name' => 'sometimes|string|max:255',
+            'client_contact' => 'nullable|string',
+            'project_location' => 'nullable|string|max:500',
+            'pic_name' => 'nullable|string|max:255',
+            'pic_phone' => 'nullable|string|max:50',
             'description' => 'nullable|string',
+            'scope_of_work' => 'nullable|string',
             'expected_end_date' => 'nullable|date',
+            'duration_days' => 'nullable|integer|min:1',
+            'po_number' => 'nullable|string|max:100',
+            'po_value' => 'nullable|numeric|min:0',
+            'po_date' => 'nullable|date',
         ]);
 
         $project->update($validated);
-        return response()->json($project->load(['items.product', 'user']));
+        return response()->json($project->load(['items.product', 'materials', 'user']));
+    }
+
+    /**
+     * Update project progress (delivery/installation)
+     */
+    public function updateProgress(Request $request, $id)
+    {
+        $project = ProjectInvestment::findOrFail($id);
+
+        $validated = $request->validate([
+            'delivery_progress' => 'nullable|integer|min:0|max:100',
+            'installation_progress' => 'nullable|integer|min:0|max:100',
+            'notes' => 'nullable|string',
+        ]);
+
+        if (isset($validated['delivery_progress'])) {
+            $project->updateProgress('delivery_progress', $validated['delivery_progress'], $validated['notes'] ?? null);
+        }
+
+        if (isset($validated['installation_progress'])) {
+            $project->updateProgress('installation_progress', $validated['installation_progress'], $validated['notes'] ?? null);
+        }
+
+        return response()->json($project->load(['progressLogs.updatedBy']));
+    }
+
+    /**
+     * Get progress history
+     */
+    public function progressHistory($id)
+    {
+        $project = ProjectInvestment::findOrFail($id);
+        $logs = $project->progressLogs()->with('updatedBy')->orderBy('created_at', 'desc')->get();
+        return response()->json($logs);
     }
 
     public function destroy($id)
