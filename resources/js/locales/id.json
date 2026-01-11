@@ -55,6 +55,8 @@
         "Products": "Manajemen Produk",
         "Categories": "Manajemen Kategori",
         "Stock": "Manajemen Stok",
+        "Warehouses": "Manajemen Gudang",
+        "StockTransfers": "Transfer Stok",
         "Sales": "Manajemen Penjualan",
         "Purchases": "Manajemen Pembelian",
         "Warranties": "Manajemen Garansi",

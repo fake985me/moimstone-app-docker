@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StockTransfer;
 use App\Models\Warehouse;
 use App\Models\CurrentStock;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -117,6 +118,13 @@ class StockTransferController extends Controller
             $sourceStock->quantity -= $stockTransfer->quantity;
             $sourceStock->save();
 
+            // If source is default warehouse, also deduct from products.stock
+            $this->syncProductStockIfDefaultWarehouse(
+                $stockTransfer->product_id,
+                $stockTransfer->from_warehouse_id,
+                -$stockTransfer->quantity
+            );
+
             // Update transfer status
             $stockTransfer->status = StockTransfer::STATUS_IN_TRANSIT;
             $stockTransfer->transferred_at = now();
@@ -155,6 +163,13 @@ class StockTransferController extends Controller
             $destStock->quantity += $stockTransfer->quantity;
             $destStock->last_updated = now();
             $destStock->save();
+
+            // If destination is default warehouse, also add to products.stock
+            $this->syncProductStockIfDefaultWarehouse(
+                $stockTransfer->product_id,
+                $stockTransfer->to_warehouse_id,
+                $stockTransfer->quantity
+            );
 
             // Update transfer status
             $stockTransfer->status = StockTransfer::STATUS_COMPLETED;
@@ -196,6 +211,13 @@ class StockTransferController extends Controller
                 $sourceStock->quantity += $stockTransfer->quantity;
                 $sourceStock->last_updated = now();
                 $sourceStock->save();
+
+                // If source is default warehouse, also restore products.stock
+                $this->syncProductStockIfDefaultWarehouse(
+                    $stockTransfer->product_id,
+                    $stockTransfer->from_warehouse_id,
+                    $stockTransfer->quantity
+                );
             }
 
             $stockTransfer->status = StockTransfer::STATUS_CANCELLED;
@@ -226,5 +248,26 @@ class StockTransferController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Sync product stock if warehouse is the default warehouse
+     * @param int $productId
+     * @param int $warehouseId
+     * @param int $quantityChange (positive to add, negative to deduct)
+     */
+    protected function syncProductStockIfDefaultWarehouse($productId, $warehouseId, $quantityChange)
+    {
+        $defaultWarehouse = Warehouse::getDefault();
+        
+        if (!$defaultWarehouse || $defaultWarehouse->id !== $warehouseId) {
+            return;
+        }
+
+        $product = Product::find($productId);
+        if ($product) {
+            $product->stock = max(0, ($product->stock ?? 0) + $quantityChange);
+            $product->save();
+        }
     }
 }

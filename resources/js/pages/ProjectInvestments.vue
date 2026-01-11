@@ -42,6 +42,7 @@
         <thead class="table-header">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project Code</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project Name</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Value</th>
@@ -52,6 +53,11 @@
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="project in projects.data" :key="project.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ project.project_code }}</td>
+            <td class="px-6 py-4">
+              <span :class="project.type === 'invest' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'" class="px-2 py-1 text-xs rounded-full">
+                {{ project.type === 'invest' ? 'Invest' : 'Design & Build' }}
+              </span>
+            </td>
             <td class="px-6 py-4 text-sm text-gray-900">{{ project.project_name }}</td>
             <td class="px-6 py-4">
               <div class="text-sm font-medium text-gray-900">{{ project.client_name }}</div>
@@ -89,6 +95,27 @@
         <h3 class="text-2xl font-bold mb-6">New Project Investment</h3>
         
         <form @submit.prevent="saveProject" class="space-y-4">
+          <!-- Project Type Selector -->
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Project Type *</label>
+            <div class="flex gap-4">
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer" :class="form.type === 'invest' ? 'bg-green-50 border-green-500' : 'hover:bg-gray-100'">
+                <input type="radio" v-model="form.type" value="invest" class="mr-2" />
+                <div>
+                  <span class="font-medium">Project Invest</span>
+                  <p class="text-xs text-gray-500">Auto-create dedicated warehouse & MSA</p>
+                </div>
+              </label>
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer" :class="form.type === 'design_build' ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-100'">
+                <input type="radio" v-model="form.type" value="design_build" class="mr-2" />
+                <div>
+                  <span class="font-medium">Design & Build</span>
+                  <p class="text-xs text-gray-500">Requires MSA contract</p>
+                </div>
+              </label>
+            </div>
+          </div>
+          
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
@@ -494,6 +521,7 @@ const error = ref('');
 const filters = ref({ search: '', status: '' });
 
 const form = ref({
+  type: 'invest',
   project_name: '',
   client_name: '',
   client_contact: '',
@@ -546,6 +574,7 @@ const loadProducts = async () => {
 
 const resetForm = () => {
   form.value = {
+    type: 'invest',
     project_name: '',
     client_name: '',
     client_contact: '',

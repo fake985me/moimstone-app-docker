@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\RMA;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Warranty;
+use App\Models\MSAProject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -49,8 +52,11 @@ class RMAController extends Controller
 
     public function store(Request $request)
     {
-       $validated = $request->validate([
+        $validated = $request->validate([
+            'sale_id' => 'required|exists:sales,id',
+            'sale_item_id' => 'nullable|exists:sale_items,id',
             'warranty_id' => 'nullable|exists:warranties,id',
+            'msa_project_id' => 'nullable|exists:msa_projects,id',
             'product_id' => 'required|exists:products,id',
             'customer_name' => 'required|string|max:255',
             'customer_contact' => 'nullable|string',
@@ -62,6 +68,27 @@ class RMAController extends Controller
 
         DB::beginTransaction();
         try {
+            // Validate eligibility (warranty or MSA)
+            $eligibility = RMA::validateEligibility(
+                $validated['sale_id'],
+                $validated['sale_item_id'] ?? null,
+                $validated['product_id']
+            );
+
+            if (!$eligibility['valid']) {
+                return response()->json([
+                    'message' => 'RMA tidak dapat dibuat: ' . $eligibility['reason']
+                ], 422);
+            }
+
+            // Auto-fill warranty_id or msa_project_id from eligibility check
+            if (isset($eligibility['warranty_id'])) {
+                $validated['warranty_id'] = $eligibility['warranty_id'];
+            }
+            if (isset($eligibility['msa_project_id'])) {
+                $validated['msa_project_id'] = $eligibility['msa_project_id'];
+            }
+
             // Auto-generate RMA code
             $rmaCode = 'RMA-' . date('Ymd') . '-' . str_pad(RMA::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
 
@@ -73,7 +100,7 @@ class RMAController extends Controller
             ]);
 
             DB::commit();
-            return response()->json($rma->load(['warranty', 'product', 'user']), 201);
+            return response()->json($rma->load(['warranty', 'product', 'user', 'sale', 'msaProject']), 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => $e->getMessage()], 422);
@@ -185,5 +212,60 @@ class RMAController extends Controller
         // - refund: process refund
 
         return response()->json($rma->load(['warranty', 'product', 'user']));
+    }
+
+    /**
+     * Get sales with active warranty or MSA for RMA creation
+     */
+    public function getSalesWithWarranty(Request $request)
+    {
+        try {
+            // Get sales that have warranties that haven't expired
+            $sales = Sale::with(['items.product', 'warranties'])
+                ->whereHas('warranties', function ($q) {
+                    $q->where(function ($w) {
+                        $w->whereNull('end_date')
+                          ->orWhere('end_date', '>=', now());
+                    });
+                })
+                ->orWhereHas('items', function ($q) {
+                    // Also include sales whose items have active MSA
+                    $q->whereHas('product', function ($p) {
+                        $p->whereIn('id', function ($subquery) {
+                            $subquery->select('product_id')
+                                ->from('msa_projects')
+                                ->where('status', 'active');
+                        });
+                    });
+                })
+                ->orderBy('sale_date', 'desc')
+                ->limit(100)
+                ->get();
+
+            return response()->json($sales);
+        } catch (\Exception $e) {
+            \Log::error('getSalesWithWarranty error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Check RMA eligibility for a specific sale/product
+     */
+    public function checkEligibility(Request $request)
+    {
+        $validated = $request->validate([
+            'sale_id' => 'required|exists:sales,id',
+            'product_id' => 'required|exists:products,id',
+            'sale_item_id' => 'nullable|exists:sale_items,id',
+        ]);
+
+        $eligibility = RMA::validateEligibility(
+            $validated['sale_id'],
+            $validated['sale_item_id'] ?? null,
+            $validated['product_id']
+        );
+
+        return response()->json($eligibility);
     }
 }

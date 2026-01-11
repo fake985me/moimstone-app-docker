@@ -87,20 +87,25 @@
         <h3 class="text-2xl font-bold mb-6">New MSA Record</h3>
         
         <form @submit.prevent="saveMSA" class="space-y-4">
+          <!-- Project Selection (Primary) -->
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Project *</label>
+            <select v-model="form.project_investment_id" required class="input">
+              <option value="">Select Project</option>
+              <option v-for="project in investProjects" :key="project.id" :value="project.id">{{ project.project_name }} ({{ project.project_code }})</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Only "Project Invest" type projects are shown</p>
+          </div>
+          
+          <!-- Product (Optional) -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Product *</label>
-            <select v-model="form.product_id" required class="input">
-              <option value="">Select Product</option>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Product (Optional)</label>
+            <select v-model="form.product_id" class="input">
+              <option value="">No specific product</option>
               <option v-for="product in products" :key="product.id" :value="product.id">{{ product.title }}</option>
             </select>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Project (Optional)</label>
-            <select v-model="form.project_investment_id" class="input">
-              <option value="">No Project</option>
-              <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.project_name }}</option>
-            </select>
-          </div>
+          
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
@@ -169,13 +174,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import api from '../services/api';
 
 const msas = ref({ data: [] });
 const products = ref([]);
 const projects = ref([]);
 const loading = ref(true);
+
+// Computed: filter only invest-type projects
+const investProjects = computed(() => {
+  return projects.value.filter(p => p.type === 'invest' || !p.type);
+});
 const showModal = ref(false);
 const showReturnModal = ref(false);
 const selectedMSA = ref(null);

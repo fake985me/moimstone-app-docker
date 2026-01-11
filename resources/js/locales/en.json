@@ -55,6 +55,8 @@
         "Products": "Product Management",
         "Categories": "Category Management",
         "Stock": "Stock Management",
+        "Warehouses": "Warehouse Management",
+        "StockTransfers": "Stock Transfers",
         "Sales": "Sales Management",
         "Purchases": "Purchase Management",
         "Warranties": "Warranty Management",

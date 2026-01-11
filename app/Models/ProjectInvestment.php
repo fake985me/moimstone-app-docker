@@ -9,8 +9,13 @@ class ProjectInvestment extends Model
 {
     use HasFactory;
 
+    const TYPE_INVEST = 'invest';
+    const TYPE_DESIGN_BUILD = 'design_build';
+
     protected $fillable = [
         'project_code',
+        'type',
+        'warehouse_id',
         'po_number',
         'po_value',
         'po_date',
@@ -49,6 +54,45 @@ class ProjectInvestment extends Model
     ];
 
     protected $appends = ['overall_progress', 'is_on_schedule', 'days_remaining'];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($project) {
+            // Auto-create dedicated warehouse for this project
+            $warehouse = Warehouse::create([
+                'code' => 'WH-' . $project->project_code,
+                'name' => $project->project_name,
+                'description' => 'Gudang khusus untuk project: ' . $project->project_name,
+                'is_active' => true,
+                'is_default' => false,
+            ]);
+            
+            // Link warehouse to project
+            $project->warehouse_id = $warehouse->id;
+            $project->saveQuietly();
+
+            // Auto-create MSA for invest type projects
+            if ($project->type === self::TYPE_INVEST) {
+                MSAProject::create([
+                    'msa_code' => 'MSA-' . $project->project_code,
+                    'project_investment_id' => $project->id,
+                    'status' => 'active',
+                    'reported_date' => now(),
+                    'user_id' => $project->user_id,
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Get the dedicated warehouse for this project
+     */
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
 
     public function items()
     {

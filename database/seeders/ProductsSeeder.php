@@ -30,15 +30,24 @@ class ProductsSeeder extends Seeder
             $this->command->warn('No products found in data file!');
             return;
         }
+
+        // Get all categories and subcategories for mapping
+        $categories = DB::table('categories')->pluck('id', 'name')->toArray();
+        $subCategories = DB::table('sub_categories')
+            ->select('id', 'name', 'category_id')
+            ->get()
+            ->groupBy('category_id');
         
         // Insert products in batches for better performance
         $batchSize = 100;
         $batches = array_chunk($products, $batchSize);
         $totalInserted = 0;
+        $categoryLinks = [];
         
         foreach ($batches as $index => $batch) {
             // Remove id and convert timestamps for each product
             $cleanBatch = array_map(function($product) {
+                $originalId = $product['id'];
                 unset($product['id']);
                 // Keep timestamps as is, they're already in correct format
                 if (isset($product['created_at'])) {
@@ -56,5 +65,53 @@ class ProductsSeeder extends Seeder
         }
         
         $this->command->info("✓ Successfully seeded {$totalInserted} products!");
+        
+        // Now sync product_category pivot table
+        $this->command->info('Syncing product categories to pivot table...');
+        
+        // Get all products with their category/sub_category strings
+        $allProducts = DB::table('products')
+            ->select('id', 'category', 'sub_category')
+            ->whereNotNull('category')
+            ->get();
+        
+        $pivotRecords = [];
+        $linked = 0;
+        
+        foreach ($allProducts as $product) {
+            // Find category ID by name
+            $categoryId = $categories[$product->category] ?? null;
+            
+            if ($categoryId) {
+                // Find subcategory ID if exists
+                $subCategoryId = null;
+                if ($product->sub_category && isset($subCategories[$categoryId])) {
+                    $subCat = $subCategories[$categoryId]->firstWhere('name', $product->sub_category);
+                    $subCategoryId = $subCat ? $subCat->id : null;
+                }
+                
+                $pivotRecords[] = [
+                    'product_id' => $product->id,
+                    'category_id' => $categoryId,
+                    'sub_category_id' => $subCategoryId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                $linked++;
+            }
+        }
+        
+        // Insert pivot records in batches
+        if (!empty($pivotRecords)) {
+            // Clear existing pivot records first
+            DB::table('product_category')->truncate();
+            
+            $pivotBatches = array_chunk($pivotRecords, 100);
+            foreach ($pivotBatches as $pivotBatch) {
+                DB::table('product_category')->insert($pivotBatch);
+            }
+        }
+        
+        $this->command->info("✓ Linked {$linked} products to categories via pivot table!");
     }
 }

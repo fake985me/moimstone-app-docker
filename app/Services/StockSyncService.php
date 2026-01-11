@@ -5,10 +5,20 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\CurrentStock;
 use App\Models\StockTransaction;
+use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 
 class StockSyncService
 {
+    /**
+     * Get the default warehouse ID
+     */
+    protected function getDefaultWarehouseId()
+    {
+        $defaultWarehouse = Warehouse::getDefault();
+        return $defaultWarehouse ? $defaultWarehouse->id : null;
+    }
+
     /**
      * Deduct stock from both Product and CurrentStock tables
      * 
@@ -17,19 +27,23 @@ class StockSyncService
      * @param string $referenceType (sale, lending, etc.)
      * @param int $referenceId
      * @param string|null $notes
+     * @param int|null $warehouseId Optional warehouse ID, uses default if not provided
      * @return bool
      * @throws \Exception
      */
-    public function deductStock($productId, $quantity, $referenceType, $referenceId, $notes = null)
+    public function deductStock($productId, $quantity, $referenceType, $referenceId, $notes = null, $warehouseId = null)
     {
         DB::beginTransaction();
         try {
             // Get product
             $product = Product::findOrFail($productId);
             
-            // Get or create current stock
+            // Use provided warehouse or default
+            $warehouseId = $warehouseId ?? $this->getDefaultWarehouseId();
+            
+            // Get or create current stock for this warehouse
             $currentStock = CurrentStock::firstOrCreate(
-                ['product_id' => $productId],
+                ['product_id' => $productId, 'warehouse_id' => $warehouseId],
                 ['quantity' => $product->stock ?? 0, 'last_updated' => now()]
             );
             
@@ -71,19 +85,23 @@ class StockSyncService
      * @param string $referenceType (purchase, lending_return, etc.)
      * @param int $referenceId
      * @param string|null $notes
+     * @param int|null $warehouseId Optional warehouse ID, uses default if not provided
      * @return bool
      */
-    public function addStock($productId, $quantity, $referenceType, $referenceId, $notes = null)
+    public function addStock($productId, $quantity, $referenceType, $referenceId, $notes = null, $warehouseId = null)
     {
         DB::beginTransaction();
         try {
             // Get product
             $product = Product::findOrFail($productId);
             
-            // Get or create current stock
+            // Use provided warehouse or default
+            $warehouseId = $warehouseId ?? $this->getDefaultWarehouseId();
+            
+            // Get or create current stock for this warehouse
             $currentStock = CurrentStock::firstOrCreate(
-                ['product_id' => $productId],
-                ['quantity' => $product->stock ?? 0, 'last_updated' => now()]
+                ['product_id' => $productId, 'warehouse_id' => $warehouseId],
+                ['quantity' => 0, 'last_updated' => now()]
             );
             
             // Add to both tables
@@ -175,4 +193,91 @@ class StockSyncService
         $currentStock = CurrentStock::where('product_id', $productId)->first();
         return $currentStock ? $currentStock->quantity : 0;
     }
+    
+    /**
+     * Adjust stock with reason tracking
+     * 
+     * @param int $productId
+     * @param string $adjustmentType 'in' or 'out'
+     * @param int $quantity
+     * @param string $reason (damaged, expired, lost, found, correction, audit, etc.)
+     * @param string|null $relatedType (asset, lending, warranty, etc.)
+     * @param int|null $relatedId
+     * @param string|null $notes
+     * @return \App\Models\StockAdjustment
+     * @throws \Exception
+     */
+    public function adjustStock($productId, $adjustmentType, $quantity, $reason, $relatedType = null, $relatedId = null, $notes = null, $warehouseId = null)
+    {
+        DB::beginTransaction();
+        try {
+            // Get product
+            $product = Product::findOrFail($productId);
+            
+            // Use provided warehouse or default
+            $warehouseId = $warehouseId ?? $this->getDefaultWarehouseId();
+            
+            // Get or create current stock for this warehouse
+            $currentStock = CurrentStock::firstOrCreate(
+                ['product_id' => $productId, 'warehouse_id' => $warehouseId],
+                ['quantity' => $product->stock ?? 0, 'last_updated' => now()]
+            );
+            
+            $beforeQty = $currentStock->quantity;
+            
+            // Validate stock for 'out' adjustments
+            if ($adjustmentType === 'out' && $currentStock->quantity < $quantity) {
+                throw new \Exception("Insufficient stock for {$product->title}. Available: {$currentStock->quantity}, Requested: {$quantity}");
+            }
+            
+            // Calculate after quantity
+            $afterQty = $adjustmentType === 'in' 
+                ? $beforeQty + $quantity 
+                : $beforeQty - $quantity;
+            
+            // Update stock
+            if ($adjustmentType === 'in') {
+                $product->increment('stock', $quantity);
+                $currentStock->quantity += $quantity;
+            } else {
+                $product->decrement('stock', $quantity);
+                $currentStock->quantity -= $quantity;
+            }
+            $currentStock->last_updated = now();
+            $currentStock->save();
+            
+            // Create stock adjustment record
+            $adjustment = \App\Models\StockAdjustment::create([
+                'adjustment_code' => \App\Models\StockAdjustment::generateCode(),
+                'product_id' => $productId,
+                'adjustment_type' => $adjustmentType,
+                'reason' => $reason,
+                'quantity' => $quantity,
+                'before_qty' => $beforeQty,
+                'after_qty' => $afterQty,
+                'related_type' => $relatedType,
+                'related_id' => $relatedId,
+                'notes' => $notes,
+                'user_id' => auth()->id(),
+            ]);
+            
+            // Also create stock transaction for audit trail
+            StockTransaction::create([
+                'product_id' => $productId,
+                'transaction_type' => $adjustmentType,
+                'quantity' => $quantity,
+                'reference_type' => 'adjustment',
+                'reference_id' => $adjustment->id,
+                'user_id' => auth()->id(),
+                'notes' => "[{$reason}] " . ($notes ?? ''),
+            ]);
+            
+            DB::commit();
+            return $adjustment;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 }
+

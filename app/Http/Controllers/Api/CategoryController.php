@@ -21,18 +21,29 @@ class CategoryController extends Controller
 
         $categories = $query->orderBy('name')->get();
 
-        // Add product count for each category
+        // Add product count for each category and subcategory
         $categories->each(function ($category) {
-            $category->products_count = DB::table('products')
-                ->where('category', $category->name)
-                ->count();
-            // Also count via pivot table
-            $category->pivot_products_count = DB::table('product_category')
+            // Count products via pivot table
+            $category->products_count = DB::table('product_category')
                 ->where('category_id', $category->id)
                 ->count();
+            
+            // Also add for public products
             $category->public_products_count = DB::table('public_product_category')
                 ->where('category_id', $category->id)
                 ->count();
+            
+            // Add products_count to each subcategory
+            if ($category->subCategories) {
+                $category->subCategories->each(function ($subCategory) {
+                    $subCategory->products_count = DB::table('product_category')
+                        ->where('sub_category_id', $subCategory->id)
+                        ->count();
+                    $subCategory->public_products_count = DB::table('public_product_category')
+                        ->where('sub_category_id', $subCategory->id)
+                        ->count();
+                });
+            }
         });
 
         return response()->json($categories);
@@ -80,10 +91,22 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
 
-        // Check if category is used by products
-        $productsCount = DB::table('products')
+        // Check if category is used by products (legacy VARCHAR field)
+        $legacyCount = DB::table('products')
             ->where('category', $category->name)
             ->count();
+
+        // Check if category is used via pivot table
+        $pivotCount = DB::table('product_category')
+            ->where('category_id', $category->id)
+            ->count();
+
+        // Check if category is used by public products via pivot
+        $publicPivotCount = DB::table('public_product_category')
+            ->where('category_id', $category->id)
+            ->count();
+
+        $productsCount = $legacyCount + $pivotCount + $publicPivotCount;
 
         if ($productsCount > 0) {
             return response()->json([
@@ -91,6 +114,9 @@ class CategoryController extends Controller
                 'products_count' => $productsCount
             ], 422);
         }
+
+        // Also delete subcategories
+        $category->subCategories()->delete();
 
         $category->delete();
 

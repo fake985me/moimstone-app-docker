@@ -315,7 +315,31 @@ const loadStats = async () => {
 };
 
 const loadSourceStock = async () => {
-  // Could load stock specific to source warehouse here if needed
+  if (!form.value.from_warehouse_id) {
+    products.value = [];
+    return;
+  }
+  
+  try {
+    // Load stocks from source warehouse
+    const response = await api.get('/stock', {
+      params: { warehouse_id: form.value.from_warehouse_id, per_page: 500 }
+    });
+    
+    // Map current_stocks to product format with quantity from warehouse
+    const stocks = response.data.data || response.data || [];
+    products.value = stocks
+      .filter(s => s.quantity > 0)  // Only show products with stock > 0
+      .map(s => ({
+        id: s.product_id,
+        title: s.product?.title || `Product #${s.product_id}`,
+        sku: s.product?.sku || '',
+        quantity: s.quantity  // This is the warehouse stock
+      }));
+  } catch (err) {
+    console.error('Failed to load source stock:', err);
+    products.value = [];
+  }
 };
 
 const resetForm = () => {
@@ -399,7 +423,6 @@ const getStatusBadge = (status) => {
 onMounted(() => {
   loadTransfers();
   loadWarehouses();
-  loadProducts();
   loadStats();
 });
 </script>

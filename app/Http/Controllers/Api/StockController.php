@@ -15,12 +15,19 @@ class StockController extends Controller
         try {
             $query = CurrentStock::with([
                     'product.productCategories.category',
-                    'product.productCategories.subCategory'
+                    'product.productCategories.subCategory',
+                    'warehouse',
+                    'location'
                 ])
                 // Exclude asset products from stock management
                 ->whereHas('product', function ($q) {
                     $q->where('is_asset', false)->orWhereNull('is_asset');
                 });
+
+            // Filter by warehouse
+            if ($request->filled('warehouse_id')) {
+                $query->where('warehouse_id', $request->warehouse_id);
+            }
 
             // Filter by low stock (using default threshold since min_stock removed)
             if ($request->has('low_stock') && $request->low_stock == 'true') {

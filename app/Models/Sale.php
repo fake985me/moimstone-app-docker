@@ -72,6 +72,32 @@ class Sale extends Model
     }
 
     /**
+     * Get RMAs for this sale
+     */
+    public function rmas()
+    {
+        return $this->hasMany(RMA::class);
+    }
+
+    /**
+     * Check if sale has active warranty for a specific product
+     */
+    public function hasActiveWarranty($productId = null)
+    {
+        $query = $this->warranties()
+            ->where(function ($q) {
+                $q->whereNull('warranty_end')
+                  ->orWhere('warranty_end', '>=', now());
+            });
+
+        if ($productId) {
+            $query->where('product_id', $productId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
      * Get stock transactions
      */
     public function stockTransactions()

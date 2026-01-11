@@ -5,7 +5,7 @@
             <h2 class="text-2xl font-bold text-gray-900">Product Management</h2>
             <div class="flex gap-3">
                 <!-- Excel Buttons -->
-                <button @click="downloadExcel"
+                <button v-if="activeTab === 'products'" @click="downloadExcel"
                     class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -13,7 +13,7 @@
                     </svg>
                     Download Excel
                 </button>
-                <button @click="downloadTemplate"
+                <button v-if="activeTab === 'products'" @click="downloadTemplate"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -21,7 +21,7 @@
                     </svg>
                     Template
                 </button>
-                <label
+                <label v-if="activeTab === 'products'"
                     class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 cursor-pointer flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -30,34 +30,60 @@
                     Upload Excel
                     <input type="file" @change="uploadExcel" accept=".xlsx,.xls,.csv" class="hidden" ref="fileInput" />
                 </label>
-                <button @click="showModal = true; editingProduct = null; resetForm()"
+                <button v-if="activeTab === 'products'" @click="showModal = true; editingProduct = null; resetForm()"
                     class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                     + Add Product
                 </button>
             </div>
         </div>
 
-        <!-- Search & Filter -->
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <input v-model="filters.search" @input="loadProducts" type="text"
-                    placeholder="Search by title, brand..."
-                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-                <select v-model="filters.category_id" @change="loadProducts"
-                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All Categories</option>
-                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                </select>
-                <select v-model="filters.brand" @change="loadProducts"
-                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All Brands</option>
-                    <option v-for="brand in brands" :key="brand" :value="brand">{{ brand }}</option>
-                </select>
-                <button @click="resetFilters" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
-                    Reset
+        <!-- Tabs -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <button @click="activeTab = 'products'"
+                    :class="[
+                        'py-4 px-1 border-b-2 font-medium text-sm',
+                        activeTab === 'products'
+                            ? 'border-indigo-500 text-indigo-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ]">
+                    Products
                 </button>
-            </div>
+                <button @click="activeTab = 'adjustments'; loadAdjustments()"
+                    :class="[
+                        'py-4 px-1 border-b-2 font-medium text-sm',
+                        activeTab === 'adjustments'
+                            ? 'border-indigo-500 text-indigo-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ]">
+                    Stock Adjustments
+                </button>
+            </nav>
         </div>
+
+        <!-- Products Tab Content -->
+        <div v-if="activeTab === 'products'">
+            <!-- Search & Filter -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <input v-model="filters.search" @input="loadProducts" type="text"
+                        placeholder="Search by title, brand..."
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+                    <select v-model="filters.category_id" @change="loadProducts"
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Categories</option>
+                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                    </select>
+                    <select v-model="filters.brand" @change="loadProducts"
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Brands</option>
+                        <option v-for="brand in brands" :key="brand" :value="brand">{{ brand }}</option>
+                    </select>
+                    <button @click="resetFilters" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                        Reset
+                    </button>
+                </div>
+            </div>
 
         <!-- Products Table -->
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
@@ -119,6 +145,8 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ product.minimum_stock || 0 }}</td>
                         <td class="px-6 py-4 text-right text-sm space-x-2">
+                            <button @click="openAdjustModal(product)"
+                                class="text-orange-600 hover:text-orange-900">Adjust</button>
                             <button @click="editProduct(product)"
                                 class="text-indigo-600 hover:text-indigo-900">Edit</button>
                             <button @click="deleteProduct(product.id)"
@@ -261,6 +289,127 @@
                 </form>
             </div>
         </div>
+        </div><!-- End Products Tab Content -->
+
+        <!-- Adjustments Tab Content -->
+        <div v-if="activeTab === 'adjustments'">
+            <!-- Adjustments Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div v-if="adjustmentsLoading" class="p-8 text-center">
+                    <p class="text-gray-600">Loading adjustments...</p>
+                </div>
+
+                <table v-else class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Before → After</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr v-for="adj in adjustments.data" :key="adj.id" class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-mono">{{ adj.adjustment_code }}</td>
+                            <td class="px-6 py-4 text-sm">{{ adj.product?.title || '-' }}</td>
+                            <td class="px-6 py-4">
+                                <span :class="[
+                                    'px-2 py-1 text-xs rounded-full',
+                                    adj.adjustment_type === 'in' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                ]">
+                                    {{ adj.adjustment_type === 'in' ? '+ IN' : '- OUT' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm capitalize">{{ adj.reason?.replace(/_/g, ' ') }}</td>
+                            <td class="px-6 py-4 text-sm font-semibold">{{ adj.quantity }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ adj.before_qty }} → {{ adj.after_qty }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ new Date(adj.created_at).toLocaleDateString() }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ adj.user?.name || '-' }}</td>
+                        </tr>
+                        <tr v-if="!adjustments.data?.length">
+                            <td colspan="8" class="px-6 py-8 text-center text-gray-500">No adjustments found</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div v-if="adjustments.data?.length" class="px-6 py-4 bg-gray-50 flex justify-between items-center">
+                    <p class="text-sm text-gray-700">
+                        Showing {{ adjustments.from }} to {{ adjustments.to }} of {{ adjustments.total }} adjustments
+                    </p>
+                    <div class="flex space-x-2">
+                        <button @click="loadAdjustments(adjustments.current_page - 1)" :disabled="!adjustments.prev_page_url"
+                            class="px-3 py-1 bg-white border rounded hover:bg-gray-50 disabled:opacity-50">Previous</button>
+                        <button @click="loadAdjustments(adjustments.current_page + 1)" :disabled="!adjustments.next_page_url"
+                            class="px-3 py-1 bg-white border rounded hover:bg-gray-50 disabled:opacity-50">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjustment Modal -->
+        <div v-if="showAdjustModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            @click.self="showAdjustModal = false">
+            <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-900">Stock Adjustment</h3>
+                    <button @click="showAdjustModal = false"
+                        class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                </div>
+
+                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p class="font-medium">{{ adjustingProduct?.title }}</p>
+                    <p class="text-sm text-gray-600">Current Stock: <span class="font-semibold">{{ adjustingProduct?.stock || 0 }}</span></p>
+                </div>
+
+                <form @submit.prevent="submitAdjustment" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Type *</label>
+                            <select v-model="adjustForm.adjustment_type" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="in">Stock In (+)</option>
+                                <option value="out">Stock Out (-)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Quantity *</label>
+                            <input v-model.number="adjustForm.quantity" type="number" min="1" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Reason *</label>
+                        <select v-model="adjustForm.reason" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select Reason</option>
+                            <option v-for="(label, key) in adjustmentReasons" :key="key" :value="key">{{ label }}</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Notes</label>
+                        <textarea v-model="adjustForm.notes" rows="2"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            placeholder="Optional notes..."></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" @click="showAdjustModal = false"
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+                        <button type="submit" :disabled="adjustSaving"
+                            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50">
+                            {{ adjustSaving ? 'Saving...' : 'Save Adjustment' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- Upload Progress/Error Message -->
         <div v-if="uploadMessage" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md">
@@ -311,6 +460,24 @@ const uploadMessage = ref(null);
 
 const categories = ref([]);
 const brands = ref([]);
+
+// Tab state
+const activeTab = ref('products');
+
+// Adjustment states
+const adjustments = ref({ data: [] });
+const adjustmentsLoading = ref(false);
+const showAdjustModal = ref(false);
+const adjustingProduct = ref(null);
+const adjustSaving = ref(false);
+const adjustmentReasons = ref({});
+
+const adjustForm = ref({
+    adjustment_type: 'out',
+    quantity: 1,
+    reason: '',
+    notes: ''
+});
 
 const filters = ref({
     search: '',
@@ -536,8 +703,98 @@ const uploadExcel = async (event) => {
     }
 };
 
+// Adjustment Functions
+const loadAdjustments = async (page = 1) => {
+    adjustmentsLoading.value = true;
+    try {
+        const response = await api.get('/stock-adjustments', {
+            params: { page, per_page: 15 }
+        });
+        adjustments.value = response.data;
+    } catch (error) {
+        console.error('Failed to load adjustments:', error);
+    } finally {
+        adjustmentsLoading.value = false;
+    }
+};
+
+const loadAdjustmentReasons = async () => {
+    try {
+        const response = await api.get('/stock-adjustments/reasons');
+        adjustmentReasons.value = response.data;
+    } catch (error) {
+        console.error('Failed to load adjustment reasons:', error);
+        // Fallback reasons
+        adjustmentReasons.value = {
+            damaged: 'Damaged',
+            expired: 'Expired',
+            lost: 'Lost',
+            found: 'Found',
+            correction: 'Correction',
+            audit: 'Stock Opname/Audit',
+            theft: 'Theft',
+            donation: 'Donation',
+            return_from_lending: 'Return from Lending',
+            warranty_replacement: 'Warranty Replacement',
+            other: 'Other'
+        };
+    }
+};
+
+const openAdjustModal = (product) => {
+    adjustingProduct.value = product;
+    resetAdjustForm();
+    showAdjustModal.value = true;
+};
+
+const resetAdjustForm = () => {
+    adjustForm.value = {
+        adjustment_type: 'out',
+        quantity: 1,
+        reason: '',
+        notes: ''
+    };
+};
+
+const submitAdjustment = async () => {
+    if (!adjustingProduct.value) return;
+    
+    adjustSaving.value = true;
+    try {
+        await api.post('/stock-adjustments', {
+            product_id: adjustingProduct.value.id,
+            adjustment_type: adjustForm.value.adjustment_type,
+            quantity: adjustForm.value.quantity,
+            reason: adjustForm.value.reason,
+            notes: adjustForm.value.notes
+        });
+        
+        showAdjustModal.value = false;
+        loadProducts(); // Reload to update stock
+        
+        // Show success message
+        uploadMessage.value = {
+            type: 'success',
+            title: 'Adjustment Saved',
+            message: `Stock adjusted successfully for ${adjustingProduct.value.title}`
+        };
+        setTimeout(() => { uploadMessage.value = null; }, 5000);
+    } catch (error) {
+        console.error('Failed to save adjustment:', error);
+        uploadMessage.value = {
+            type: 'error',
+            title: 'Adjustment Failed',
+            message: error.response?.data?.message || 'Failed to save adjustment'
+        };
+        setTimeout(() => { uploadMessage.value = null; }, 8000);
+    } finally {
+        adjustSaving.value = false;
+    }
+};
+
 onMounted(() => {
     loadFilterOptions();
     loadProducts();
+    loadAdjustmentReasons();
 });
 </script>

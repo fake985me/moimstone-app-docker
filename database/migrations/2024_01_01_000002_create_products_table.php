@@ -19,9 +19,6 @@ return new class extends Migration {
             $table->string('brand', 100)->nullable();
             $table->string('title')->nullable();
 
-            // Description
-            $table->text('descriptions')->nullable();
-
             // Pricing
             $table->decimal('price', 15, 2)->default(0);
 

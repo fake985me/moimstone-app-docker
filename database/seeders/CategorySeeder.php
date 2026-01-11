@@ -18,7 +18,7 @@ class CategorySeeder extends Seeder
             ['name' => 'SWITCH', 'description' => 'Network switches'],
             ['name' => 'ROUTER', 'description' => 'Network routers'],
             ['name' => 'WIRELESS', 'description' => 'Wireless networking products'],
-            ['name' => 'CPE', 'description' => 'Customer Premises Equipment'],
+            ['name' => 'SFP', 'description' => 'Small Form Factor Pluggable'],
         ];
 
         foreach ($categories as $category) {

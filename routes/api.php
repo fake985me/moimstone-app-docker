@@ -80,6 +80,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stock-transactions', [App\Http\Controllers\Api\StockController::class, 'transactions']);
     Route::post('/stock-transactions', [App\Http\Controllers\Api\StockController::class, 'store']);
 
+    // Stock Adjustments
+    Route::prefix('stock-adjustments')->group(function () {
+        Route::get('/reasons', [App\Http\Controllers\Api\StockAdjustmentController::class, 'reasons']);
+        Route::get('/stats', [App\Http\Controllers\Api\StockAdjustmentController::class, 'stats']);
+        Route::get('/product/{productId}', [App\Http\Controllers\Api\StockAdjustmentController::class, 'byProduct']);
+    });
+    Route::apiResource('stock-adjustments', App\Http\Controllers\Api\StockAdjustmentController::class)->only(['index', 'store', 'show']);
+
     // Sales
     Route::get('/sales/{id}/export', [App\Http\Controllers\Api\SaleController::class, 'exportInvoice']);
     Route::get('/sales/{id}/pdf', [App\Http\Controllers\Api\SaleController::class, 'downloadPdf']);
@@ -105,6 +113,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/lendings/{lending}/return', [App\Http\Controllers\Api\LendingController::class, 'processReturn']);
 
     // RMAs (Return Merchandise Authorization)
+    Route::get('/rmas/sales-with-warranty', [App\Http\Controllers\Api\RMAController::class, 'getSalesWithWarranty']);
+    Route::post('/rmas/check-eligibility', [App\Http\Controllers\Api\RMAController::class, 'checkEligibility']);
     Route::apiResource('rmas', App\Http\Controllers\Api\RMAController::class);
     Route::post('/rmas/{rma}/mark-received', [App\Http\Controllers\Api\RMAController::class, 'markReceived']);
     Route::post('/rmas/{rma}/process', [App\Http\Controllers\Api\RMAController::class, 'process']);
@@ -149,6 +159,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Warehouse Management
     Route::prefix('warehouses')->group(function () {
         Route::get('/statistics', [App\Http\Controllers\Api\WarehouseController::class, 'statistics']);
+        Route::get('/products', [App\Http\Controllers\Api\WarehouseController::class, 'products']);
+        Route::get('/default-stocks', [App\Http\Controllers\Api\WarehouseController::class, 'defaultWarehouseStocks']);
+        Route::post('/add-product-stock', [App\Http\Controllers\Api\WarehouseController::class, 'addProductStock']);
         Route::post('/{warehouse}/set-default', [App\Http\Controllers\Api\WarehouseController::class, 'setDefault']);
         Route::get('/{warehouse}/locations', [App\Http\Controllers\Api\WarehouseController::class, 'locations']);
         Route::post('/{warehouse}/locations', [App\Http\Controllers\Api\WarehouseController::class, 'storeLocation']);

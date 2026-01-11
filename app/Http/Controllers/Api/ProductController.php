@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\CurrentStock;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -112,6 +113,9 @@ class ProductController extends Controller
             $product->syncCategories($categoriesData);
         }
 
+        // Sync stock to default warehouse
+        $this->syncStockToDefaultWarehouse($product);
+
         // Load relationships for response
         $product->load(['productCategories.category', 'productCategories.subCategory']);
         $product->category_pairs = $product->categoryPairs;
@@ -159,6 +163,9 @@ class ProductController extends Controller
         if ($categoriesData !== null) {
             $product->syncCategories($categoriesData);
         }
+
+        // Sync stock to default warehouse
+        $this->syncStockToDefaultWarehouse($product);
 
         // Load relationships for response
         $product->load(['productCategories.category', 'productCategories.subCategory']);
@@ -301,5 +308,28 @@ class ProductController extends Controller
                 'message' => 'Import failed: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Sync product stock to default warehouse current_stocks
+     */
+    protected function syncStockToDefaultWarehouse(Product $product)
+    {
+        $defaultWarehouse = Warehouse::getDefault();
+        
+        if (!$defaultWarehouse) {
+            return;
+        }
+
+        CurrentStock::updateOrCreate(
+            [
+                'product_id' => $product->id,
+                'warehouse_id' => $defaultWarehouse->id,
+            ],
+            [
+                'quantity' => $product->stock ?? 0,
+                'last_updated' => now(),
+            ]
+        );
     }
 }

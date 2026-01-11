@@ -37,9 +37,9 @@ class DashboardController extends Controller
             ->groupBy('product_id')
             ->with('product');
 
-        // Filter by category if provided
+        // Filter by category if provided (using pivot table)
         if ($categoryId) {
-            $query->whereHas('product', function ($q) use ($categoryId) {
+            $query->whereHas('product.productCategories', function ($q) use ($categoryId) {
                 $q->where('category_id', $categoryId);
             });
         }

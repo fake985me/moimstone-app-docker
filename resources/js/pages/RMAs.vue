@@ -99,33 +99,45 @@
 
     <!-- Create Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+      <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <h3 class="text-2xl font-bold mb-6">New RMA</h3>
         
         <form @submit.prevent="saveRMA" class="space-y-4">
+          <!-- Step 1: Select Sale -->
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Sale with Warranty/MSA *</label>
+            <select v-model="form.sale_id" @change="onSaleSelect" required class="input">
+              <option value="">-- Select a Sale --</option>
+              <option v-for="sale in sales" :key="sale.id" :value="sale.id">
+                {{ sale.invoice_number }} - {{ sale.customer_name }} ({{ formatDate(sale.sale_date) }})
+              </option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Only sales with active warranty or MSA are shown</p>
+          </div>
+
+          <!-- Eligibility Status -->
+          <div v-if="eligibility.checked" :class="eligibility.valid ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'" class="p-3 rounded-lg text-sm">
+            <span v-if="eligibility.valid">✓ {{ eligibility.reason }}</span>
+            <span v-else>✗ {{ eligibility.reason }}</span>
+          </div>
+
+          <!-- Step 2: Select Product from Sale Items (when sale selected) -->
+          <div v-if="form.sale_id && saleItems.length" class="p-4 bg-gray-50 rounded-lg">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Product *</label>
+            <div class="space-y-2">
+              <label v-for="item in saleItems" :key="item.id" 
+                class="flex items-center p-3 border rounded-lg cursor-pointer"
+                :class="form.product_id === item.product_id ? 'bg-white border-blue-500' : 'hover:bg-gray-100'">
+                <input type="radio" v-model="form.product_id" :value="item.product_id" @change="checkEligibility" class="mr-3" />
+                <div>
+                  <span class="font-medium">{{ item.product?.title }}</span>
+                  <span class="text-sm text-gray-500 ml-2">(Qty: {{ item.quantity }})</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">RMA Code *</label>
-              <input v-model="form.rma_code" required class="input" readonly />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Warranty (Optional)</label>
-              <select v-model="form.warranty_id" @change="loadWarrantyData" class="input">
-                <option value="">Select Warranty</option>
-                <option v-for="warranty in warranties" :key="warranty.id" :value="warranty.id">
-                  {{ warranty.warranty_code }} - {{ warranty.product?.title }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Product * ({{ products.length }} available)</label>
-              <select v-model="form.product_id" required class="input">
-                <option value="">Select Product</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
-                  {{ product.title }}
-                </option>
-              </select>
-            </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
               <input v-model="form.customer_name" required class="input" />
@@ -162,7 +174,7 @@
 
           <div class="flex justify-end space-x-3 pt-4 border-t">
             <button type="button" @click="showModal = false" class="btn-secondary">Cancel</button>
-            <button type="submit" :disabled="saving" class="btn-primary">{{ saving ? 'Saving...' : 'Create RMA' }}</button>
+            <button type="submit" :disabled="saving || !eligibility.valid" class="btn-primary">{{ saving ? 'Saving...' : 'Create RMA' }}</button>
           </div>
         </form>
       </div>
@@ -243,14 +255,15 @@ import { ref, computed, onMounted } from 'vue';
 import api from '../services/api';
 
 const rmas = ref({ data: [] });
-const products = ref([]);
-const warranties = ref([]);
+const sales = ref([]);
+const saleItems = ref([]);
 const loading = ref(true);
 const showModal = ref(false);
 const showConditionModal = ref(false);
 const selectedRMA = ref(null);
 const saving = ref(false);
 const error = ref('');
+const eligibility = ref({ checked: false, valid: false, reason: '' });
 
 const filters = ref({ search: '', status: '', reason: '' });
 
@@ -260,8 +273,7 @@ const conditionForm = ref({
 });
 
 const form = ref({
-  rma_code: 'RMA-' + Date.now(),
-  warranty_id: '',
+  sale_id: '',
   product_id: '',
   customer_name: '',
   customer_contact: '',
@@ -270,6 +282,11 @@ const form = ref({
   issue_date: new Date().toISOString().split('T')[0],
   notes: '',
 });
+
+const formatDate = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('id-ID');
+};
 
 const formatReason = (reason) => {
   return reason.replace(/_/g, ' ');
@@ -328,30 +345,51 @@ const loadProducts = async () => {
   }
 };
 
-const loadWarranties = async () => {
+const loadSalesWithWarranty = async () => {
   try {
-    const response = await api.get('/warranties', { params: { per_page: 1000 } });
-    warranties.value = response.data.data || [];
+    const response = await api.get('/rmas/sales-with-warranty');
+    sales.value = response.data || [];
   } catch (err) {
-    console.error(err);
+    console.error('Failed to load sales:', err);
   }
 };
 
-const loadWarrantyData = () => {
-  if (form.value.warranty_id) {
-    const warranty = warranties.value.find(w => w.id === parseInt(form.value.warranty_id));
-    if (warranty) {
-      form.value.product_id = warranty.product_id;
-      form.value.customer_name = warranty.sale?.customer_name || '';
-      form.value.reason = 'warranty_claim';
+const onSaleSelect = () => {
+  form.value.product_id = '';
+  eligibility.value = { checked: false, valid: false, reason: '' };
+  
+  if (form.value.sale_id) {
+    const sale = sales.value.find(s => s.id === parseInt(form.value.sale_id));
+    if (sale) {
+      saleItems.value = sale.items || [];
+      form.value.customer_name = sale.customer_name || '';
+      form.value.customer_contact = sale.customer_phone || sale.customer_email || '';
     }
+  } else {
+    saleItems.value = [];
+  }
+};
+
+const checkEligibility = async () => {
+  if (!form.value.sale_id || !form.value.product_id) {
+    eligibility.value = { checked: false, valid: false, reason: '' };
+    return;
+  }
+  
+  try {
+    const response = await api.post('/rmas/check-eligibility', {
+      sale_id: form.value.sale_id,
+      product_id: form.value.product_id,
+    });
+    eligibility.value = { checked: true, ...response.data };
+  } catch (err) {
+    eligibility.value = { checked: true, valid: false, reason: 'Failed to check eligibility' };
   }
 };
 
 const resetForm = () => {
   form.value = {
-    rma_code: 'RMA-' + Date.now(),
-    warranty_id: '',
+    sale_id: '',
     product_id: '',
     customer_name: '',
     customer_contact: '',
@@ -360,6 +398,8 @@ const resetForm = () => {
     issue_date: new Date().toISOString().split('T')[0],
     notes: '',
   };
+  saleItems.value = [];
+  eligibility.value = { checked: false, valid: false, reason: '' };
   error.value = '';
 };
 
@@ -427,7 +467,6 @@ const deleteRMA = async (id) => {
 
 onMounted(() => {
   loadRMAs();
-  loadProducts();
-  loadWarranties();
+  loadSalesWithWarranty();
 });
 </script>

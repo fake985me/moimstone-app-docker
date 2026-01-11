@@ -261,4 +261,102 @@ class WarehouseController extends Controller
             'warehouse' => $warehouse
         ]);
     }
+
+    /**
+     * Add product stock to default warehouse
+     */
+    public function addProductStock(Request $request)
+    {
+        $defaultWarehouse = Warehouse::getDefault();
+        
+        if (!$defaultWarehouse) {
+            return response()->json([
+                'message' => 'No default warehouse set. Please set a default warehouse first.'
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'location_id' => 'nullable|exists:warehouse_locations,id',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $stockService = app(\App\Services\StockSyncService::class);
+        
+        try {
+            $stockService->addStock(
+                $validated['product_id'],
+                $validated['quantity'],
+                'warehouse_receipt',
+                $defaultWarehouse->id,
+                $validated['notes'] ?? 'Added to warehouse',
+                $defaultWarehouse->id
+            );
+
+            // If location specified, update the CurrentStock location
+            if (!empty($validated['location_id'])) {
+                \App\Models\CurrentStock::where('product_id', $validated['product_id'])
+                    ->where('warehouse_id', $defaultWarehouse->id)
+                    ->update(['location_id' => $validated['location_id']]);
+            }
+
+            return response()->json([
+                'message' => 'Stock added successfully to ' . $defaultWarehouse->name,
+                'warehouse' => $defaultWarehouse
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    /**
+     * Get products list for dropdown
+     */
+    public function products(Request $request)
+    {
+        $query = \App\Models\Product::query();
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        $products = $query->select('id', 'title', 'sku', 'brand', 'stock')
+            ->orderBy('title')
+            ->limit(50)
+            ->get();
+
+        return response()->json($products);
+    }
+
+    /**
+     * Get stocks in default warehouse
+     */
+    public function defaultWarehouseStocks(Request $request)
+    {
+        $defaultWarehouse = Warehouse::getDefault();
+        
+        if (!$defaultWarehouse) {
+            return response()->json(['data' => [], 'message' => 'No default warehouse']);
+        }
+
+        $query = \App\Models\CurrentStock::with(['product', 'location'])
+            ->where('warehouse_id', $defaultWarehouse->id)
+            ->where('quantity', '>', 0);
+
+        if ($request->filled('search')) {
+            $query->whereHas('product', function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $stocks = $query->orderBy('quantity', 'desc')->paginate(15);
+
+        return response()->json([
+            'warehouse' => $defaultWarehouse,
+            'stocks' => $stocks
+        ]);
+    }
 }
